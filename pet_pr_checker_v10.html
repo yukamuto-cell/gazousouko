@@ -180,6 +180,31 @@ function fixUrl(url){
 }
 
 let sheetsData=[], sheetsLoaded=false, sheetsError=false;
+// GAS経由で画像をbase64取得
+const imgBase64Cache = {};
+function fetchImgViaGAS(url) {
+  return new Promise((resolve) => {
+    if(!url) return resolve(null);
+    if(imgBase64Cache[url]) return resolve(imgBase64Cache[url]);
+    const cbName = 'imgCallback_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const scriptEl = document.createElement('script');
+    window[cbName] = function(data) {
+      delete window[cbName];
+      try { if(scriptEl.parentNode) scriptEl.parentNode.removeChild(scriptEl); } catch(e){}
+      if(data && data.base64 && !data.error) {
+        const dataUrl = 'data:' + data.mimeType + ';base64,' + data.base64;
+        imgBase64Cache[url] = dataUrl;
+        resolve(dataUrl);
+      } else {
+        resolve(null);
+      }
+    };
+    scriptEl.onerror = function(){ delete window[cbName]; resolve(null); };
+    scriptEl.src = GAS_URL + '?action=getImage&url=' + encodeURIComponent(url) + '&callback=' + cbName;
+    document.head.appendChild(scriptEl);
+  });
+}
+
 function loadSheets(){
   sheetsLoaded=false; sheetsError=false;
   return new Promise((resolve)=>{
@@ -676,7 +701,7 @@ function loadFromLocal(){
 
 
 // ===== PPM出力 =====
-const VISUAL_SECS_SET = new Set(['犬の持ち物','猫の持ち物','モデル関連','飼い主関連','ペット用コントロールグッズ']);
+const VISUAL_SECS_SET = new Set(['犬の持ち物','猫の持ち物','モデル関連','飼い主関連']);
 
 function exportPPM(caseId, orientation) {
   if(!orientation) {
@@ -703,8 +728,8 @@ function exportPPM(caseId, orientation) {
   const OC = {'PECO':'3C3489','飼い主':'085041','クライアント':'633806','モデル':'712B13','カメラマン':'0C447C'};
   const OB = {'PECO':'EEEDFE','飼い主':'D8EFE4','クライアント':'FAEEDA','モデル':'FAECE7','カメラマン':'E6F1FB'};
   const CC = {header:'185FA5',light:'EBF3FB',lightMid:'B5D4F4',bg:'FFFFFF',row1:'F7FAFD',row2:'FFFFFF',border:'B5D4F4',text:'1C1A17',text2:'5A5552',text3:'9A9490',secbg:'EBF3FB',sectext:'0C447C',accent:'85B7EB'};
-  const DO = {'犬の持ち物':{'ワクチン接種証明書':'飼い主','狂犬病証明書':'飼い主','リード・ハーネス・首輪':'飼い主','犬用の水・給水器':'飼い主'},'猫の持ち物':{'ワクチン接種証明書':'飼い主','キャリーバッグ（慣れたもの）':'飼い主','猫用おやつ・フェリウェイ':'飼い主'},'モデル関連':{'衣装':'モデル','持ち物':'モデル','ペット同伴の場合の確認':'PECO'},'飼い主関連':{'衣装':'飼い主','飼い主の緊急連絡先を共有済みか':'PECO'},'ペット用コントロールグッズ':{'好きなおやつ（コントロール用）':'飼い主','おもちゃ（コントロール用）':'飼い主','おやつ予備':'PECO','おもちゃ予備':'PECO'}};
-  const SD = {'犬の持ち物':{icon:'🐶',items:['ワクチン接種証明書','狂犬病証明書','リード・ハーネス・首輪','犬用の水・給水器']},'猫の持ち物':{icon:'🐱',items:['ワクチン接種証明書','キャリーバッグ（慣れたもの）','猫用おやつ・フェリウェイ']},'モデル関連':{icon:'👤',items:['衣装','持ち物','ペット同伴の場合の確認']},'飼い主関連':{icon:'🏠',items:['衣装','飼い主の緊急連絡先を共有済みか']},'ペット用コントロールグッズ':{icon:'🎾',items:['好きなおやつ（コントロール用）','おもちゃ（コントロール用）','おやつ予備','おもちゃ予備']},'衛生用品（ペット用）':{icon:'🧹',items:['トイレシーツ','消臭スプレー（ペット用）','マナーバッグ・ビニール袋','タオル']},'衛生用品（人用）':{icon:'🧴',items:['ティッシュ','ウェットティッシュ','コロコロ','ゴミ袋（小）','ゴミ袋（中）','ゴミ袋（大）','ガムテープ','養生テープ','救急セット','カイロ']},'ケータリング':{icon:'☕',items:['水・お茶・飲み物','紙コップ','朝食','軽食（スナック、飴）','昼食（お弁当）']},'書類':{icon:'📋',items:['PPM','当日の香盤・スケジュール表']}};
+  const DO = {'犬の持ち物':{'ワクチン接種証明書':'飼い主','狂犬病証明書':'飼い主','リード・ハーネス・首輪':'飼い主','犬用の水・給水器':'飼い主','好きなおやつ（コントロール用）':'飼い主','おもちゃ（コントロール用）':'飼い主'},'猫の持ち物':{'ワクチン接種証明書':'飼い主','キャリーバッグ（慣れたもの）':'飼い主','猫用おやつ・フェリウェイ':'飼い主','好きなおやつ（コントロール用）':'飼い主','おもちゃ（コントロール用）':'飼い主'},'モデル関連':{'衣装':'モデル','持ち物':'モデル','ペット同伴の場合の確認':'PECO'},'飼い主関連':{'衣装':'飼い主','飼い主の緊急連絡先を共有済みか':'PECO'},'ペット用コントロールグッズ':{'好きなおやつ（コントロール用）':'飼い主','おもちゃ（コントロール用）':'飼い主','おやつ予備':'PECO','おもちゃ予備':'PECO'}};
+  const SD = {'犬の持ち物':{icon:'🐶',items:['ワクチン接種証明書','狂犬病証明書','リード・ハーネス・首輪','犬用の水・給水器','好きなおやつ（コントロール用）','おもちゃ（コントロール用）']},'猫の持ち物':{icon:'🐱',items:['ワクチン接種証明書','キャリーバッグ（慣れたもの）','猫用おやつ・フェリウェイ','好きなおやつ（コントロール用）','おもちゃ（コントロール用）']},'モデル関連':{icon:'👤',items:['衣装','持ち物','ペット同伴の場合の確認']},'飼い主関連':{icon:'🏠',items:['衣装','飼い主の緊急連絡先を共有済みか']},'ペット用コントロールグッズ':{icon:'🎾',items:['おやつ予備','おもちゃ予備']},'衛生用品（ペット用）':{icon:'🧹',items:['トイレシーツ','消臭スプレー（ペット用）','マナーバッグ・ビニール袋','タオル']},'衛生用品（人用）':{icon:'🧴',items:['ティッシュ','ウェットティッシュ','コロコロ','ゴミ袋（小）','ゴミ袋（中）','ゴミ袋（大）','ガムテープ','養生テープ','救急セット','カイロ']},'ケータリング':{icon:'☕',items:['水・お茶・飲み物','紙コップ','朝食','軽食（スナック、飴）','昼食（お弁当）']},'書類':{icon:'📋',items:['PPM','当日の香盤・スケジュール表']}};
   const MS = {'犬単体':['犬の持ち物','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'猫単体':['猫の持ち物','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'犬＋モデル':['犬の持ち物','モデル関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'猫＋モデル':['猫の持ち物','モデル関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'犬＋飼い主':['犬の持ち物','飼い主関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'猫＋飼い主':['猫の持ち物','飼い主関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類']};
 
   function sk(s){return s.replace(/[^a-zA-Z0-9\u3000-\u9fff\u4e00-\u9fff]/g,'_');}
@@ -819,11 +844,12 @@ function exportPPM(caseId, orientation) {
         const col=idx%CARD_COLS, row=Math.floor(idx/CARD_COLS);
         const cx=MX+col*(CARD_W+GAP_X), cy2=g.startY+SEC_LH+row*(CARD_H+GAP_Y);
         slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cx,y:cy2,w:CARD_W,h:CARD_H,fill:{color:'F7FAFD'},rectRadius:0.08,line:{color:CC.border,width:0.75}});
-        if(item.img){
+        slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cx+0.06,y:cy2+0.04,w:CARD_W-0.12,h:IMG_H-0.05,fill:{color:CC.light},rectRadius:0.05,line:{color:CC.border}});
+        const imgData = imgBase64Cache[item.img];
+        if(imgData){
           const is=Math.min(CARD_W-0.1,IMG_H-0.05);
-          slide.addImage({path:item.img,x:cx+(CARD_W-is)/2,y:cy2+0.04,w:is,h:is});
+          slide.addImage({data:imgData,x:cx+(CARD_W-is)/2,y:cy2+0.04,w:is,h:is});
         } else {
-          slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cx+0.06,y:cy2+0.04,w:CARD_W-0.12,h:IMG_H-0.05,fill:{color:CC.light},rectRadius:0.05,line:{color:CC.border}});
           slide.addText('No Image',{x:cx+0.06,y:cy2+0.04,w:CARD_W-0.12,h:IMG_H-0.05,fontSize:9,color:CC.text3,align:'center',valign:'middle',fontFace:'Meiryo',margin:0});
         }
         slide.addText(item.name,{x:cx+0.04,y:cy2+IMG_H+0.02,w:CARD_W-0.08,h:0.22,fontSize:9,color:CC.text,fontFace:'Meiryo',align:'center',valign:'middle',margin:0});
@@ -856,15 +882,16 @@ function exportPPM(caseId, orientation) {
         tcy+=SEC_HT;
       } else {
         const sc=row.nameLines?row.nameLines.length-1:0;
-        const rh=ROW_HB+sc*ROW_HS;
+        const rhBase=ROW_HB+sc*ROW_HS;
+        const rhMin=row.img?(isL?0.6:0.5):0;
+        const rh=Math.max(rhBase,rhMin);
         const bgc=ri%2===0?CC.row1:CC.row2;
         slide.addShape(pres.shapes.RECTANGLE,{x:MX,y:tcy,w:TW,h:rh,fill:{color:bgc},line:{color:CC.border,width:0.5}});
         tcx=MX;
         slide.addText(String(row.no),{x:tcx,y:tcy,w:COL_W[0],h:rh,fontSize:10,color:CC.text2,align:'center',valign:'middle',fontFace:'Meiryo',margin:0}); tcx+=COL_W[0];
         const ni=row.nameLines.map((l,i)=>({text:l,options:{breakLine:i<row.nameLines.length-1,fontSize:l.startsWith('  ')?9:11,color:l.startsWith('  📝')?'888884':CC.text,bold:i===0}}));
         slide.addText(ni,{x:tcx+0.04,y:tcy+0.02,w:COL_W[1]-0.08,h:rh-0.04,fontFace:'Meiryo',valign:'top',margin:0}); tcx+=COL_W[1];
-        if(row.img) slide.addImage({path:row.img,x:tcx+(COL_W[2]-rh*0.82)/2,y:tcy+(rh-rh*0.82)/2,w:rh*0.82,h:rh*0.82});
-        else slide.addText('−',{x:tcx,y:tcy,w:COL_W[2],h:rh,fontSize:10,color:'CCCCCC',align:'center',valign:'middle',fontFace:'Meiryo',margin:0}); tcx+=COL_W[2];
+        slide.addText('−',{x:tcx,y:tcy,w:COL_W[2],h:rh,fontSize:10,color:'CCCCCC',align:'center',valign:'middle',fontFace:'Meiryo',margin:0}); tcx+=COL_W[2];
         slide.addText(row.qty||'-',{x:tcx,y:tcy,w:COL_W[3],h:rh,fontSize:11,color:CC.text,align:'center',valign:'middle',fontFace:'Meiryo',margin:0}); tcx+=COL_W[3];
         const oc=OC[row.owner]||'444441',ob=OB[row.owner]||'F1EFE8';
         const pw=Math.min(COL_W[4]-0.1,0.75),px=tcx+(COL_W[4]-pw)/2,py=tcy+(rh-0.22)/2;
