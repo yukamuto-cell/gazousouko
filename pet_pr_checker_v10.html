@@ -700,7 +700,7 @@ function loadFromLocal(){
 // ===== PPM出力 =====
 const VISUAL_SECS_SET = new Set(['犬の持ち物','猫の持ち物','モデル関連','飼い主関連']);
 
-function exportPPM(caseId, orientation) {
+async function exportPPM(caseId, orientation) {
   if(!orientation) {
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;display:flex;align-items:center;justify-content:center;';
@@ -827,6 +827,18 @@ function exportPPM(caseId, orientation) {
   ts.addText('撮影備品リスト',{x:0.5,y:H*0.28,w:W-1,h:H*0.2,fontSize:isL?38:32,bold:true,color:'FFFFFF',fontFace:'Meiryo',margin:0});
   ts.addText([{text:c.name,options:{bold:true,breakLine:true}},{text:`モデルタイプ：${c.modelType}　${c.date?'撮影日：'+c.date:''}`,options:{bold:false}}],{x:0.5,y:H*0.52,w:W-1,h:H*0.22,fontSize:isL?15:13,color:CC.lightMid,fontFace:'Meiryo',margin:0});
   ts.addText(`作成日：${new Date().toLocaleDateString('ja-JP')}`,{x:0,y:H-0.4,w:W,h:0.35,fontSize:10,color:CC.accent,align:'right',margin:0,fontFace:'Meiryo'});
+
+  // 画像を事前にGAS経由で取得
+  const allImgUrls = [];
+  vGroups.forEach(g => g.items.forEach(item => {
+    if(item.img && !allImgUrls.includes(item.img)) allImgUrls.push(item.img);
+  }));
+  console.log('取得する画像URL一覧:', allImgUrls);
+  for(const url of allImgUrls) {
+    const result = await fetchImgViaGAS(url);
+    console.log('画像取得結果:', url.slice(-30), result ? '成功' : '失敗');
+  }
+  console.log('キャッシュ完了:', Object.keys(imgBase64Cache).length, '件');
 
   // ビジュアルスライド
   vSlides.forEach(groups=>{
