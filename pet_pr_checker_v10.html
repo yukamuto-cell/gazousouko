@@ -870,6 +870,11 @@ async function exportPPM(caseId, orientation) {
     });
   });
 
+  // テーブル画像も事前取得
+  const tImgUrls = [];
+  tRows.forEach(r => { if(r.img && !tImgUrls.includes(r.img)) tImgUrls.push(r.img); });
+  for(const url of tImgUrls) { await fetchImgViaGAS(url); }
+
   // テーブルスライド
   tPages.forEach(pageRows=>{
     if(!pageRows.length) return;
@@ -900,7 +905,10 @@ async function exportPPM(caseId, orientation) {
         slide.addText(String(row.no),{x:tcx,y:tcy,w:COL_W[0],h:rh,fontSize:10,color:CC.text2,align:'center',valign:'middle',fontFace:'Meiryo',margin:0}); tcx+=COL_W[0];
         const ni=row.nameLines.map((l,i)=>({text:l,options:{breakLine:i<row.nameLines.length-1,fontSize:l.startsWith('  ')?9:11,color:l.startsWith('  📝')?'888884':CC.text,bold:i===0}}));
         slide.addText(ni,{x:tcx+0.04,y:tcy+0.02,w:COL_W[1]-0.08,h:rh-0.04,fontFace:'Meiryo',valign:'top',margin:0}); tcx+=COL_W[1];
-        slide.addText('−',{x:tcx,y:tcy,w:COL_W[2],h:rh,fontSize:10,color:'CCCCCC',align:'center',valign:'middle',fontFace:'Meiryo',margin:0}); tcx+=COL_W[2];
+        const tImgData=imgBase64Cache[row.img];
+        if(tImgData){const is=rh*0.82;slide.addImage({data:tImgData,x:tcx+(COL_W[2]-is)/2,y:tcy+(rh-is)/2,w:is,h:is});}
+        else slide.addText('−',{x:tcx,y:tcy,w:COL_W[2],h:rh,fontSize:10,color:'CCCCCC',align:'center',valign:'middle',fontFace:'Meiryo',margin:0});
+        tcx+=COL_W[2];
         slide.addText(row.qty||'-',{x:tcx,y:tcy,w:COL_W[3],h:rh,fontSize:11,color:CC.text,align:'center',valign:'middle',fontFace:'Meiryo',margin:0}); tcx+=COL_W[3];
         const oc=OC[row.owner]||'444441',ob=OB[row.owner]||'F1EFE8';
         const pw=Math.min(COL_W[4]-0.1,0.75),px=tcx+(COL_W[4]-pw)/2,py=tcy+(rh-0.22)/2;
