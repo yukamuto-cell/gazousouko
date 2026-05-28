@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>撮影チェッカー — ペットPRツール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F7F5F0; --surface: #FFFFFF; --surface2: #EBF3FB;
+  --border: #C5D8EF; --text: #1C1A17; --text2: #6B6560; --text3: #A09A93;
+  --accent: #185FA5; --accent-light: #E6F1FB; --radius: 10px; --radius-sm: 6px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.7; }
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; position: sticky; top: 0; z-index: 100; }
+.header-inner { max-width: 860px; margin: 0 auto; display: flex; align-items: center; height: 56px; gap: 1rem; }
+.logo { display: flex; align-items: center; gap: 8px; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 16px; color: var(--accent); }
+.logo-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+main { max-width: 860px; margin: 0 auto; padding: 2rem; }
+.cases-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; }
+.case-chip { font-size: 13px; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; background: var(--surface); color: var(--text2); font-family: 'Noto Sans JP', sans-serif; font-weight: 500; transition: all 0.15s; }
+.case-chip:hover { border-color: var(--accent); color: var(--accent); }
+.case-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+.case-chip.add-case { border-style: dashed; }
+.top-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.25rem; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.field-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 4px; }
+.field-value { font-size: 15px; font-weight: 700; padding: 5px 0; }
+input[type=date], input[type=number], select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Noto Sans JP', sans-serif; font-size: 14px; color: var(--text); background: var(--bg); transition: border-color 0.15s; }
+input[type=number] { width: 70px; text-align: center; }
+select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; cursor: pointer; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); background: white; }
+.prog-wrap { margin-bottom: 1.25rem; }
+.prog-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.prog-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.4s; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.25rem; padding: 8px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+.check-item.not-needed { opacity: 0.38; }
+.check-item.not-needed .item-text { text-decoration: line-through; color: var(--text3); }
+.owner-select { font-size: 11px; padding: 2px 6px; border-radius: 20px; border: 1px solid transparent; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; font-weight: 700; appearance: none; -webkit-appearance: none; background-image: none; min-width: 60px; text-align: center; }
+.owner-select:hover { border-color: rgba(0,0,0,0.15); }
+.owner-select:focus { outline: none; border-color: rgba(0,0,0,0.25); }
+.not-needed-btn { font-size: 11px; padding: 2px 8px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; background: none; color: var(--text3); font-family: 'Noto Sans JP', sans-serif; white-space: nowrap; transition: all 0.15s; }
+.not-needed-btn:hover { border-color: #C53030; color: #C53030; }
+.not-needed-btn.active { background: #FDECEA; border-color: #C53030; color: #C53030; font-weight: 500; }
+.section-head { padding: 10px 1.25rem; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+
+.check-item { padding: 10px 1.25rem; border-bottom: 1px solid var(--border); }
+.check-item:last-child { border-bottom: none; }
+.check-label-row { display: flex; align-items: center; gap: 10px; cursor: pointer; transition: opacity 0.1s; }
+.check-label-row:hover { opacity: 0.8; }
+.check-item.done .check-label-row { opacity: 0.42; }
+.check-item.done .item-text { text-decoration: line-through; color: var(--text3); }
+.check-box { width: 18px; height: 18px; border: 1.5px solid var(--border); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.check-item.done .check-box { background: var(--accent); border-color: var(--accent); }
+.checkmark { display: none; width: 10px; height: 6px; border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg) translateY(-1px); }
+.check-item.done .checkmark { display: block; }
+.item-text { font-size: 14px; flex: 1; line-height: 1.5; }
+.item-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.owner-pill { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
+.qty-wrap { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text2); }
+.qty-wrap input[type=number] { width: 54px; padding: 3px 6px; font-size: 13px; }
+.section-memo { padding: 10px 1.25rem; border-top: 1px solid var(--border); background: var(--bg); }
+.section-memo-label { font-size: 11px; color: var(--text3); font-weight: 500; margin-bottom: 4px; }
+.memo-input { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text); background: var(--surface); resize: none; line-height: 1.6; font-family: 'Noto Sans JP', sans-serif; }
+.memo-input:focus { outline: none; border-color: var(--accent); }
+.item-extras { margin-top: 6px; display: flex; flex-direction: column; gap: 5px; }
+.selected-photo-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.sel-photo-tag { display: flex; align-items: center; gap: 5px; padding: 3px 8px 3px 4px; background: var(--accent-light); border-radius: 20px; font-size: 11px; color: var(--accent); }
+.sel-photo-tag img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+.sel-photo-tag .ph { width: 22px; height: 22px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+.sel-photo-tag span { font-weight: 500; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sel-photo-tag button { background: none; border: none; cursor: pointer; color: var(--accent); font-size: 13px; padding: 0; line-height: 1; }
+.btn-open { font-size: 12px; padding: 4px 10px; border: 1px dashed var(--border); border-radius: var(--radius-sm); cursor: pointer; background: none; color: var(--text2); font-family: 'Noto Sans JP', sans-serif; transition: all 0.15s; }
+.btn-open:hover { border-color: var(--accent); color: var(--accent); }
+.bihin-thumb { width: 36px; height: 36px; object-fit: cover; border-radius: 5px; flex-shrink: 0; }
+.bihin-thumb-ph { width: 36px; height: 36px; border-radius: 5px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.action-row { display: flex; gap: 8px; margin-top: 1.5rem; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: var(--radius-sm); font-family: 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text2); transition: all 0.15s; }
+.btn:hover { background: var(--surface2); }
+.btn.accent { background: var(--accent); border-color: var(--accent); color: white; }
+.btn.accent:hover { background: #235A42; }
+.btn.danger { color: #C53030; border-color: #FDECEA; }
+.btn.danger:hover { background: #FDECEA; }
+.btn.sm { font-size: 12px; padding: 5px 12px; }
+.no-case { text-align: center; padding: 3rem 1rem; color: var(--text3); font-size: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-start; justify-content: center; padding-top: 40px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius); padding: 1.5rem; width: min(640px, 94vw); max-height: 82vh; overflow-y: auto; border: 1px solid var(--border); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.modal-title { font-size: 16px; font-weight: 700; }
+.modal-close { background: none; border: none; cursor: pointer; font-size: 22px; color: var(--text2); padding: 0; line-height: 1; }
+.modal-toolbar { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; }
+.modal-search { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--bg); font-family: 'Noto Sans JP', sans-serif; }
+.modal-search:focus { outline: none; border-color: var(--accent); background: white; }
+.cat-filter { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 1rem; }
+.cat-btn { font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; background: none; color: var(--text2); font-family: 'Noto Sans JP', sans-serif; transition: all 0.15s; }
+.cat-btn.active { background: var(--text); color: white; border-color: var(--text); }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+.photo-card { border: 2px solid transparent; border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all 0.15s; background: var(--surface2); position: relative; }
+.photo-card:hover { border-color: var(--border); }
+.photo-card.selected { border-color: var(--accent); background: var(--accent-light); }
+.photo-img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.photo-placeholder { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 28px; background: var(--surface2); }
+.photo-name { font-size: 11px; padding: 4px 5px; text-align: center; color: var(--text); line-height: 1.3; }
+.photo-card.selected .photo-name { color: var(--accent); font-weight: 500; }
+.sel-check { display: none; position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: var(--accent); border-radius: 50%; align-items: center; justify-content: center; font-size: 11px; color: white; font-weight: 700; }
+.photo-card.selected .sel-check { display: flex; }
+.list-item { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-bottom: 1px solid var(--border); cursor: pointer; border-radius: var(--radius-sm); transition: background 0.1s; }
+.list-item:last-child { border-bottom: none; }
+.list-item:hover { background: var(--surface2); }
+.list-item.selected { background: var(--accent-light); }
+.list-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.list-thumb-ph { width: 44px; height: 44px; border-radius: 6px; flex-shrink: 0; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.modal-actions { display: flex; gap: 8px; padding-top: 1.25rem; border-top: 1px solid var(--border); position: sticky; bottom: 0; background: var(--surface); }
+.loading-msg { text-align: center; padding: 2rem; color: var(--text2); font-size: 13px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="logo"><div class="logo-icon">🐾</div>撮影チェッカー</div>
+    <div style="margin-left:auto;font-size:12px;color:var(--text3);display:flex;align-items:center;gap:12px;">
+      <button onclick="exportData()" style="font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:none;color:var(--text2);font-family:'Noto Sans JP',sans-serif;">📤 エクスポート</button>
+      <label style="font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:none;color:var(--text2);">📥 インポート<input type="file" accept=".json" onchange="importData(event)" style="display:none;"></label>
+    </div>
+  </div>
+</header>
+<main>
+  <div class="cases-bar" id="cases-bar"></div>
+  <div id="main-area"></div>
+</main>
+
+<div class="modal-overlay" id="bihin-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">📦 備品リストから選ぶ</div>
+      <button class="modal-close" onclick="closeBihin()">×</button>
+    </div>
+    <div class="modal-toolbar">
+      <input class="modal-search" type="text" id="bihin-search" placeholder="品名で検索..." oninput="renderBihinGrid()">
+      <button class="btn sm" onclick="toggleView()" id="view-toggle">☰ リスト</button>
+      <button class="btn sm" onclick="reloadSheets()">↺ 再読込</button>
+    </div>
+    <div class="cat-filter" id="cat-filter"></div>
+    <div id="bihin-grid"></div>
+    <div class="modal-actions">
+      <button class="btn accent" onclick="confirmBihin()">決定（<span id="sel-count">0</span>件）</button>
+      <button class="btn" onclick="closeBihin()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbx7NrJYDN3FbdL517_fLtHYQ9rabkyq__VQ-Cu2sC9h6zg4e0mY7_admtPFb2AlPtwVDQ/exec';
+const OWNERS = {
+  'PECO':       { bg:'#EEEDFE', color:'#3C3489' },
+  '飼い主':     { bg:'#D8EFE4', color:'#085041' },
+  'クライアント':{ bg:'#FAEEDA', color:'#633806' },
+  'モデル':     { bg:'#FAECE7', color:'#712B13' },
+  'カメラマン': { bg:'#E6F1FB', color:'#0C447C' },
+};
+const OWNER_KEYS = ['PECO','飼い主','クライアント','モデル','カメラマン'];
+function ownerStyle(n){ const o=OWNERS[n]||{bg:'#F1EFE8',color:'#444441'}; return `background:${o.bg};color:${o.color};`; }
+function safeKey(s){ return s.replace(/[^a-zA-Z0-9\u3000-\u9fff\u4e00-\u9fff]/g,'_'); }
+function fixUrl(url){
+  if(!url||url.includes('ファイルID')||!url.trim()) return '';
+  url=url.trim();
+  const m1=url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(m1) return 'https://drive.google.com/uc?export=view&id='+m1[1];
+  const m2=url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if(m2) return 'https://drive.google.com/uc?export=view&id='+m2[1];
+  return url;
+}
+
+let sheetsData=[], sheetsLoaded=false, sheetsError=false;
+function loadSheets(){
+  sheetsLoaded=false; sheetsError=false;
+  return new Promise((resolve)=>{
+    const cbName='gasCallback_'+Date.now();
+    window[cbName]=function(json){
+      try{
+        sheetsData=json.map(r=>({
+          cat:(r.cat||'').trim(), name:(r.name||'').trim(), img:fixUrl((r.img||'').trim())
+        })).filter(r=>r.cat&&r.name);
+        sheetsLoaded=true;
+      }catch(e){ sheetsError=true; }
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      resolve();
+    };
+    const script=document.createElement('script');
+    script.onerror=function(){ sheetsError=true; delete window[cbName]; resolve(); };
+    script.src=GAS_URL+'?callback='+cbName;
+    document.head.appendChild(script);
+  });
+}
+
+const STATIC_BIHIN=[
+  {cat:'おもちゃ（犬）',name:'犬おもちゃ_フリスビー',img:'https://github.com/user-attachments/assets/f4564dfb-7ba6-4b1c-b3d7-dfc9e843f00d'},
+  {cat:'おもちゃ（犬）',name:'犬おもちゃ_ハートロープ',img:'https://github.com/user-attachments/assets/fe3c3fd9-96c6-49d0-851e-e8400076c581'},
+  {cat:'おもちゃ（犬）',name:'犬おもちゃ_ボール赤',img:''},{cat:'おもちゃ（犬）',name:'犬おもちゃ_ボール緑',img:''},{cat:'おもちゃ（犬）',name:'犬おもちゃ_ロープ',img:''},
+  {cat:'おもちゃ（猫）',name:'猫おもちゃ_ねこじゃらし',img:''},{cat:'おもちゃ（猫）',name:'猫おもちゃ_キャットタワーA（高）',img:''},{cat:'おもちゃ（猫）',name:'猫おもちゃ_キャットタワーＢ（低）',img:''},
+  {cat:'ベッド（犬）',name:'ベッド_グレー',img:''},
+  {cat:'衛生用品',name:'救急セット',img:''},{cat:'衛生用品',name:'消臭剤_ペット用',img:''},{cat:'衛生用品',name:'消臭剤_O2ケア',img:''},{cat:'衛生用品',name:'コロコロ',img:''},{cat:'衛生用品',name:'ゴミ袋_大',img:''},{cat:'衛生用品',name:'ゴミ袋_小',img:''},{cat:'衛生用品',name:'ペットシーツ',img:''},{cat:'衛生用品',name:'ペット用タオル',img:''},{cat:'衛生用品',name:'ペット用ウェットティッシュ',img:''},{cat:'衛生用品',name:'ティッシュ',img:''},{cat:'衛生用品',name:'ペット用うんち袋',img:''},
+  {cat:'備品',name:'ガムテープ',img:''},{cat:'備品',name:'マジック・ペン',img:''},{cat:'備品',name:'養生テープ',img:''},{cat:'備品',name:'椅子',img:''},{cat:'備品',name:'菓子入れ_カゴ',img:''},{cat:'備品',name:'菓子入れ_トレー',img:''},{cat:'備品',name:'スリッパ',img:''},{cat:'備品',name:'バインダー',img:''},{cat:'備品',name:'クッションカバー_白',img:''},{cat:'備品',name:'マルチカバー_白',img:''},{cat:'備品',name:'マルチカバー_オレンジ',img:''},{cat:'備品',name:'マルチカバー_ブルー',img:''},{cat:'備品',name:'マルチカバー_ピンク',img:''},{cat:'備品',name:'ファー',img:''},{cat:'備品',name:'マルチカバー_グレー',img:''},{cat:'備品',name:'マルチカバー_ライトグレー',img:''},{cat:'備品',name:'ベッドカバー_グレー',img:''},{cat:'備品',name:'カーペット_毛足長・グリーン・円形200',img:''},{cat:'備品',name:'カーペット_毛足長・グレー・正方形190×190',img:''},{cat:'備品',name:'カーペット_毛足長・グレー・長方形240×190',img:''},{cat:'備品',name:'カーペット_毛足短・オフホワイト・長方形240×190',img:''},{cat:'備品',name:'カーペット_毛足短・ベージュ・長方形130×180',img:''},
+  {cat:'食器',name:'猫食器_グレー・直径13',img:''},{cat:'食器',name:'猫食器_猫型・直径12',img:''},{cat:'食器',name:'犬猫食器_イエロー・直径13',img:''},{cat:'食器',name:'犬猫食器_白A・直径13',img:''},{cat:'食器',name:'犬猫食器_白A・直径14',img:''},{cat:'食器',name:'犬食器_脚付き・直径17',img:''},{cat:'食器',name:'犬食器_ル・クルーゼ・直径12',img:''},
+  {cat:'機材',name:'ビデオプロジェクター',img:''},{cat:'機材',name:'カメラ_オリンパス',img:''},{cat:'機材',name:'ケーブル',img:''},
+  {cat:'衣装',name:'女性_トップス_ブラウン',img:''},{cat:'衣装',name:'女性_トップス_ベージュ',img:''},{cat:'衣装',name:'女性_トップス_カーキ',img:''},{cat:'衣装',name:'女性_トップス_オレンジ',img:''},{cat:'衣装',name:'女性_トップス_白(襟つき）',img:''},{cat:'衣装',name:'女性_トップス_ブルー（ロング）',img:''},{cat:'衣装',name:'女性_トップス_白（コットン）',img:''},{cat:'衣装',name:'女性_トップス_ベージュ（ロング）',img:''},{cat:'衣装',name:'男性_トップス_グレー',img:''},{cat:'衣装',name:'男性_トップス_ブルー',img:''},{cat:'衣装',name:'男性_トップス_白',img:''},{cat:'衣装',name:'男性_トップス_オフホワイト',img:''},{cat:'衣装',name:'女性_ボトム_スカートグレー',img:''},{cat:'衣装',name:'女性_ボトム_デニム',img:''},{cat:'衣装',name:'女性_ボトム_パンツ白',img:''},{cat:'衣装',name:'男性_ボトム_パンツ黒',img:''},{cat:'衣装',name:'男性_靴_白',img:''},{cat:'衣装',name:'女性_靴_白',img:''},{cat:'衣装',name:'女性_インナー',img:''},{cat:'衣装',name:'男性_インナー',img:''},{cat:'衣装',name:'女性_靴下_白',img:''},{cat:'衣装',name:'女性_靴下_黒',img:''},{cat:'衣装',name:'男性_靴下_白',img:''},{cat:'衣装',name:'男性_靴下_黒',img:''},
+  {cat:'ケータリング',name:'水・お茶',img:''},{cat:'ケータリング',name:'菓子',img:''},{cat:'ケータリング',name:'お弁当',img:''},{cat:'ケータリング',name:'その他',img:''},
+  {cat:'書類',name:'PPM',img:''},{cat:'書類',name:'香盤・スケジュール表',img:''},
+  {cat:'犬持ち物',name:'ハーネス・リード・首輪',img:''},
+  {cat:'犬持ち物',name:'おもちゃ',img:''},
+  {cat:'犬持ち物',name:'その他',img:''},
+  {cat:'猫持ち物',name:'ハーネス・リード・首輪',img:''},
+  {cat:'猫持ち物',name:'おもちゃ',img:''},
+  {cat:'猫持ち物',name:'その他',img:''},
+];
+function getBihinData(){ return sheetsLoaded&&sheetsData.length?sheetsData:STATIC_BIHIN; }
+
+// セクション定義
+const SECTIONS = {
+  '犬の持ち物': { icon:'🐶', items:[
+    {text:'ワクチン接種証明書', owner:'飼い主'},
+    {text:'狂犬病証明書', owner:'飼い主'},
+    {text:'リード・ハーネス・首輪', owner:'飼い主', bihin:true, bihinCat:'犬持ち物'},
+    {text:'犬用の水・給水器', owner:'飼い主'},
+  ], sectionMemo:true },
+  '猫の持ち物': { icon:'🐱', items:[
+    {text:'ワクチン接種証明書', owner:'飼い主'},
+    {text:'キャリーバッグ（慣れたもの）', owner:'飼い主', bihin:true, bihinCat:'猫持ち物'},
+    {text:'猫用おやつ・フェリウェイ', owner:'飼い主'},
+  ], sectionMemo:true },
+  'モデル関連': { icon:'👤', items:[
+    {text:'衣装', owner:'モデル', bihin:true, bihinCat:'衣装'},
+    {text:'持ち物', owner:'モデル', itemMemo:true},
+    {text:'ペット同伴の場合の確認', owner:'PECO', itemMemo:true},
+  ], sectionMemo:true },
+  '飼い主関連': { icon:'🏠', items:[
+    {text:'衣装', owner:'飼い主', bihin:true, bihinCat:'衣装'},
+    {text:'飼い主の緊急連絡先を共有済みか', owner:'PECO'},
+  ], sectionMemo:true },
+  'ペット用コントロールグッズ': { icon:'🎾', items:[
+    {text:'好きなおやつ（コントロール用）', owner:'飼い主'},
+    {text:'おもちゃ（コントロール用）', owner:'飼い主', bihin:true, bihinCat:'おもちゃ'},
+    {text:'おやつ予備', owner:'PECO'},
+    {text:'おもちゃ予備', owner:'PECO', bihin:true, bihinCat:'おもちゃ', itemMemo:true},
+  ], sectionMemo:true },
+  '衛生用品（ペット用）': { icon:'🧹', items:[
+    {text:'トイレシーツ', owner:'PECO', qty:true},
+    {text:'消臭スプレー（ペット用）', owner:'PECO', qty:true},
+    {text:'マナーバッグ・ビニール袋', owner:'PECO', qty:true},
+    {text:'タオル', owner:'PECO', qty:true},
+  ], sectionMemo:true },
+  '衛生用品（人用）': { icon:'🧴', items:[
+    {text:'ティッシュ', owner:'PECO', qty:true},
+    {text:'ウェットティッシュ', owner:'PECO', qty:true},
+    {text:'コロコロ', owner:'PECO', qty:true},
+    {text:'ゴミ袋（小）', owner:'PECO', qty:true},
+    {text:'ゴミ袋（中）', owner:'PECO', qty:true},
+    {text:'ゴミ袋（大）', owner:'PECO', qty:true},
+    {text:'ガムテープ', owner:'PECO', qty:true},
+    {text:'養生テープ', owner:'PECO', qty:true},
+    {text:'救急セット', owner:'PECO', qty:true},
+    {text:'カイロ', owner:'PECO', qty:true},
+  ], sectionMemo:true },
+  'ケータリング': { icon:'☕', items:[
+    {text:'水・お茶・飲み物', owner:'PECO', qty:true, itemMemo:true},
+    {text:'紙コップ', owner:'PECO', qty:true},
+    {text:'朝食', owner:'PECO', qty:true, itemMemo:true},
+    {text:'軽食（スナック、飴）', owner:'PECO', qty:true, itemMemo:true},
+    {text:'昼食（お弁当）', owner:'PECO', qty:true, itemMemo:true},
+  ], sectionMemo:true },
+  '書類': { icon:'📋', items:[
+    {text:'PPM', owner:'PECO', qty:true, itemMemo:true},
+    {text:'当日の香盤・スケジュール表', owner:'PECO', itemMemo:true},
+  ], sectionMemo:false },
+  '衣装': { icon:'👗', items:[
+    {text:'衣装セット', owner:'クライアント', bihin:true, bihinCat:'衣装', itemMemo:true},
+  ], sectionMemo:true },
+};
+
+const MODEL_SECTIONS = {
+  '犬単体':    ['犬の持ち物','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],
+  '猫単体':    ['猫の持ち物','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],
+  '犬＋モデル':['犬の持ち物','モデル関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],
+  '猫＋モデル':['猫の持ち物','モデル関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],
+  '犬＋飼い主':['犬の持ち物','飼い主関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],
+  '猫＋飼い主':['猫の持ち物','飼い主関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],
+};
+function getSections(mt){ return (MODEL_SECTIONS[mt]||MODEL_SECTIONS['犬単体']).map(k=>({key:k,...SECTIONS[k]})).filter(Boolean); }
+
+let cases=[], activeCaseId=null;
+let bihinMode='all', bihinTargetId=null, bihinTargetField=null, bihinCatFilter=null;
+let bihinSelected=new Set();
+let activeCat='all', viewMode='grid';
+
+function changeOwner(caseId, sk, val){
+  const c=cases.find(c=>c.id===caseId); if(!c) return;
+  if(!c.owners) c.owners={};
+  c.owners[sk]=val;
+  // ピルの表示を更新
+  const pill=document.getElementById('owner_'+caseId+'_'+sk);
+  if(pill){
+    const o=OWNERS[val]||{bg:'#F1EFE8',color:'#444441'};
+    pill.textContent=val;
+    pill.style.background=o.bg;
+    pill.style.color=o.color;
+  }
+  saveToLocal();
+}
+function toggleNotNeeded(caseId, sk){
+  const c=cases.find(c=>c.id===caseId); if(!c) return;
+  if(!c.notNeeded) c.notNeeded={};
+  c.notNeeded[sk]=!c.notNeeded[sk];
+  const row=document.getElementById('row_'+caseId+'_'+sk);
+  if(row) row.classList.toggle('not-needed',!!c.notNeeded[sk]);
+  const btn=document.getElementById('nn_'+caseId+'_'+sk);
+  if(btn){ btn.classList.toggle('active',!!c.notNeeded[sk]); btn.textContent=c.notNeeded[sk]?'✕ 不要':'不要'; }
+  refreshProgress(c);
+  saveToLocal();
+}
+function addCase(){
+  const name=prompt('案件名を入力してください\n例：春キャンペーン、○○フード撮影');
+  if(!name||!name.trim()) return;
+  const id=Date.now();
+  cases.push({id,name:name.trim(),modelType:'犬単体',date:'',checks:{},memos:{},qtys:{},bihinFields:{},bihin:[]});
+  activeCaseId=id; renderAll();
+}
+function switchCase(id){ activeCaseId=id; renderAll(); }
+function getActive(){ return cases.find(c=>c.id===activeCaseId)||null; }
+function deleteCase(id){
+  if(!confirm('この案件を削除しますか？')) return;
+  cases=cases.filter(c=>c.id!==id);
+  activeCaseId=cases.length?cases[0].id:null; saveToLocal(); renderAll();
+}
+function toggleCheck(caseId,sk){
+  const c=cases.find(c=>c.id===caseId); if(!c) return;
+  c.checks[sk]=!c.checks[sk];
+  const row=document.getElementById('row_'+caseId+'_'+sk);
+  if(row) row.classList.toggle('done',!!c.checks[sk]);
+  refreshProgress(c);
+  saveToLocal();
+}
+function saveMemo(caseId,sk,val){ const c=cases.find(c=>c.id===caseId); if(c){ c.memos[sk]=val; saveToLocal(); } }
+function saveQty(caseId,sk,val){
+  const c=cases.find(c=>c.id===caseId); if(!c) return;
+  c.qtys[sk]=val;
+  const row=document.getElementById('row_'+caseId+'_'+sk);
+  const isZero=(val==='0'||val===0||val==='');
+  if(row) row.classList.toggle('not-needed', val==='0');
+  refreshProgress(c);
+}
+function removeTag(caseId,field,item){
+  const c=cases.find(c=>c.id===caseId); if(!c) return;
+  if(!c.bihinFields) c.bihinFields={};
+  c.bihinFields[field]=(c.bihinFields[field]||[]).filter(i=>i!==item); saveToLocal(); renderMain();
+}
+function removeBihin(caseId,item){
+  const c=cases.find(c=>c.id===caseId); if(!c) return;
+  c.bihin=(c.bihin||[]).filter(i=>i!==item); saveToLocal(); renderMain();
+}
+function onModelChange(caseId,val){
+  const c=cases.find(c=>c.id===caseId);
+  if(c){c.modelType=val; c.checks={}; c.memos={}; c.qtys={}; c.bihinFields={};}
+  saveToLocal(); renderMain();
+}
+function onDateChange(caseId,val){ const c=cases.find(c=>c.id===caseId); if(c){ c.date=val; saveToLocal(); } }
+function resetChecks(){
+  const c=getActive();
+  if(!c||!confirm('チェックをすべてリセットしますか？')) return;
+  c.checks={}; c.memos={}; c.qtys={}; c.bihinFields={}; renderMain();
+}
+function refreshProgress(c){
+  const secs=getSections(c.modelType);
+  let total=0,done=0;
+  secs.forEach(s=>{
+    s.items.forEach(item=>{
+      const sk=safeKey(s.key+'__'+item.text);
+      if(c.notNeeded&&c.notNeeded[sk]) return;
+      if(item.qty&&(c.qtys&&c.qtys[sk]==='0'||c.qtys&&c.qtys[sk]===0)) return;
+      total++; if(c.checks[sk]) done++;
+    });
+  });
+  (c.bihin||[]).forEach(item=>{ total++; if(c.checks[safeKey('bihin__'+item)]) done++; });
+  const pct=total?Math.round(done/total*100):0;
+  const f=document.getElementById('prog-fill'),t=document.getElementById('prog-text'),p=document.getElementById('prog-pct');
+  if(f) f.style.width=pct+'%';
+  if(t) t.textContent=done+' / '+total+' 項目チェック済み';
+  if(p) p.textContent=pct+'%';
+}
+
+// 備品モーダル
+async function openBihin(caseId, field, catFilter){
+  bihinTargetId=caseId; bihinTargetField=field; bihinCatFilter=catFilter||null;
+  const c=cases.find(c=>c.id===caseId)||{bihin:[],bihinFields:{}};
+  if(field==='bihin') bihinSelected=new Set(c.bihin||[]);
+  else bihinSelected=new Set((c.bihinFields||{})[field]||[]);
+  activeCat=catFilter||'all';
+  const title = catFilter==='衣装'?'👗 衣装を選ぶ':catFilter==='おもちゃ'?'🎾 おもちゃを選ぶ':catFilter?`📦 ${catFilter}から選ぶ`:'📦 備品リストから選ぶ';
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('bihin-search').value='';
+  document.getElementById('bihin-modal').classList.add('open');
+  document.getElementById('bihin-grid').innerHTML='<div class="loading-msg">読み込み中...</div>';
+  if(!sheetsLoaded&&!sheetsError) await loadSheets();
+  renderCatFilter(); renderBihinGrid();
+}
+function closeBihin(){ document.getElementById('bihin-modal').classList.remove('open'); }
+async function reloadSheets(){
+  document.getElementById('bihin-grid').innerHTML='<div class="loading-msg">再読み込み中...</div>';
+  sheetsLoaded=false; sheetsError=false;
+  await loadSheets(); renderCatFilter(); renderBihinGrid();
+}
+function toggleView(){
+  viewMode=viewMode==='grid'?'list':'grid';
+  document.getElementById('view-toggle').textContent=viewMode==='grid'?'☰ リスト':'⊞ グリッド';
+  renderBihinGrid();
+}
+function getFiltered(){
+  const data=getBihinData();
+  const q=document.getElementById('bihin-search').value.toLowerCase();
+  return data.filter(r=>{
+    if(bihinCatFilter&&bihinCatFilter!=='all'&&activeCat==='all'&&!r.cat.includes(bihinCatFilter)) return false;
+    if(activeCat!=='all'&&r.cat!==activeCat) return false;
+    if(q&&!r.name.toLowerCase().includes(q)&&!r.cat.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+function renderCatFilter(){
+  const data=getBihinData();
+  const cats=[...new Set(data.filter(r=>!bihinCatFilter||r.cat.includes(bihinCatFilter)).map(r=>r.cat))];
+  let html=`<button class="cat-btn${activeCat==='all'?' active':''}" onclick="setCat('all')">すべて</button>`;
+  cats.forEach(c=>{ const esc=c.replace(/'/g,"\\'"); html+=`<button class="cat-btn${activeCat===c?' active':''}" onclick="setCat('${esc}')">${c}</button>`; });
+  document.getElementById('cat-filter').innerHTML=html;
+}
+function setCat(cat){ activeCat=cat; renderCatFilter(); renderBihinGrid(); }
+function renderBihinGrid(){
+  const items=getFiltered();
+  document.getElementById('sel-count').textContent=bihinSelected.size;
+  if(!items.length){ document.getElementById('bihin-grid').innerHTML=`<div style="text-align:center;padding:1.5rem;color:var(--text3);font-size:13px;">${sheetsError?'読み込みに失敗しました。共有設定を確認してください。':'該当する備品がありません'}</div>`; return; }
+  if(viewMode==='grid'){
+    let html='<div class="photo-grid">';
+    items.forEach(item=>{
+      const sel=bihinSelected.has(item.name);
+      const esc=item.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      html+=`<div class="photo-card${sel?' selected':''}" onclick="toggleItem('${esc}')">
+        ${item.img?`<img class="photo-img" src="${item.img}" alt="${item.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="photo-placeholder" style="display:none;">📦</div>`:`<div class="photo-placeholder">📦</div>`}
+        <div class="sel-check">✓</div><div class="photo-name">${item.name}</div>
+      </div>`;
+    });
+    html+='</div>';
+    document.getElementById('bihin-grid').innerHTML=html;
+  } else {
+    let html='';
+    items.forEach(item=>{
+      const sel=bihinSelected.has(item.name);
+      const esc=item.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      html+=`<div class="list-item${sel?' selected':''}" onclick="toggleItem('${esc}')">
+        ${item.img?`<img class="list-thumb" src="${item.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="list-thumb-ph" style="display:none;">📦</div>`:`<div class="list-thumb-ph">📦</div>`}
+        <span style="font-size:13px;flex:1;">${item.name}</span>
+        <span style="font-size:11px;color:var(--text3);">${item.cat}</span>
+        ${sel?'<span style="color:var(--accent);font-size:18px;font-weight:700;">✓</span>':''}
+      </div>`;
+    });
+    document.getElementById('bihin-grid').innerHTML=html;
+  }
+}
+function toggleItem(name){
+  if(bihinSelected.has(name)) bihinSelected.delete(name); else bihinSelected.add(name);
+  document.getElementById('sel-count').textContent=bihinSelected.size;
+  renderBihinGrid();
+}
+function confirmBihin(){
+  const c=cases.find(c=>c.id===bihinTargetId); if(!c) return;
+  if(!c.bihinFields) c.bihinFields={};
+  if(bihinTargetField==='bihin') c.bihin=[...bihinSelected];
+  else c.bihinFields[bihinTargetField]=[...bihinSelected];
+  saveToLocal(); closeBihin(); renderMain();
+}
+
+function renderCasesBar(){
+  document.getElementById('cases-bar').innerHTML=
+    cases.map(c=>`<button class="case-chip${c.id===activeCaseId?' active':''}" onclick="switchCase(${c.id})">${c.name}</button>`).join('')+
+    `<button class="case-chip add-case" onclick="addCase()">＋ 案件を追加</button>`;
+}
+
+function renderMain(){
+  const area=document.getElementById('main-area');
+  const c=getActive();
+  if(!c){ area.innerHTML=`<div class="no-case" style="padding:3rem;text-align:center;"><div style="font-size:36px;margin-bottom:1rem;">🐾</div><p>「＋ 案件を追加」から始めてください。</p></div>`; return; }
+  const secs=getSections(c.modelType);
+  let total=0,done=0;
+  secs.forEach(s=>{
+    s.items.forEach(item=>{
+      const sk=safeKey(s.key+'__'+item.text);
+      if(c.notNeeded&&c.notNeeded[sk]) return;
+      if(item.qty&&(c.qtys&&c.qtys[sk]==='0'||c.qtys&&c.qtys[sk]===0)) return;
+      total++; if(c.checks[sk]) done++;
+    });
+  });
+  (c.bihin||[]).forEach(item=>{ total++; if(c.checks[safeKey('bihin__'+item)]) done++; });
+  const pct=total?Math.round(done/total*100):0;
+
+  let html=`
+  <div class="top-card">
+    <div class="field-row">
+      <div><div class="field-label">案件名</div><div class="field-value">${c.name}</div></div>
+      <div><div class="field-label">撮影日</div><input type="date" value="${c.date}" onchange="onDateChange(${c.id},this.value)"></div>
+    </div>
+    <div><div class="field-label">モデルタイプ</div>
+      <select onchange="onModelChange(${c.id},this.value)">
+        ${['犬単体','猫単体','犬＋モデル','猫＋モデル','犬＋飼い主','猫＋飼い主'].map(t=>`<option${t===c.modelType?' selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-row">
+      <span style="font-size:13px;color:var(--text2);" id="prog-text">${done} / ${total} 項目チェック済み</span>
+      <span style="font-size:13px;font-weight:700;color:var(--accent);" id="prog-pct">${pct}%</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:${pct}%"></div></div>
+  </div>
+  <div class="legend">
+    <span style="font-size:12px;color:var(--text3);margin-right:4px;">担当:</span>
+    ${Object.entries(OWNERS).map(([n,o])=>`<div class="legend-item"><div class="legend-dot" style="background:${o.bg};border:1.5px solid ${o.color};"></div><span>${n}</span></div>`).join('')}
+    <span style="font-size:11px;color:var(--text3);margin-left:4px;">▼で担当変更可</span>
+  </div>`;
+
+  secs.forEach(sec=>{
+    html+=`<div class="section" id="sec_${c.id}_${safeKey(sec.key)}">
+      <div class="section-head"><span>${sec.icon}</span>${sec.key}</div>
+      <div class="section-body">`;
+    sec.items.forEach(item=>{
+      const sk=safeKey(sec.key+'__'+item.text);
+      const isDone=!!c.checks[sk];
+      const isNotNeeded=!!(c.notNeeded&&c.notNeeded[sk])||(item.qty&&(c.qtys&&c.qtys[sk])==='0');
+      const memoVal=(c.memos&&c.memos[sk])||'';
+      const qtyVal=(c.qtys&&c.qtys[sk])||'';
+      const fieldKey=sec.key+'__'+item.text+'__bihin';
+      const selectedBihin=((c.bihinFields||{})[fieldKey])||[];
+      html+=`<div class="check-item${isDone?' done':''}${isNotNeeded?' not-needed':''}" id="row_${c.id}_${sk}">
+        <div class="check-label-row" onclick="toggleCheck(${c.id},'${sk}')">
+          <div class="check-box"><div class="checkmark"></div></div>
+          <span class="item-text">${item.text}</span>
+          <div class="item-right">
+            ${item.qty
+              ?`<div class="qty-wrap"><span>必要数:</span><input type="number" min="0" value="${qtyVal}" placeholder="-" title="0で不要扱い" onclick="event.stopPropagation()" onchange="saveQty(${c.id},'${sk}',this.value)"></div>`
+              :`<button class="not-needed-btn${isNotNeeded?' active':''}" id="nn_${c.id}_${sk}" onclick="event.stopPropagation();toggleNotNeeded(${c.id},'${sk}')">${isNotNeeded?'✕ 不要':'不要'}</button>`}
+            ${(()=>{
+              const effectiveOwner=(c.owners&&c.owners[sk])||item.owner;
+              const o=OWNERS[effectiveOwner]||{bg:'#F1EFE8',color:'#444441'};
+              const opts=OWNER_KEYS.map(k=>`<option value="${k}"${k===effectiveOwner?' selected':''}>${k}</option>`).join('');
+              return `<select class="owner-select" id="owner_${c.id}_${sk}" style="background:${o.bg};color:${o.color};" onclick="event.stopPropagation()" onchange="changeOwner(${c.id},'${sk}',this.value)">${opts}</select>`;
+            })()}
+          </div>
+        </div>`;
+      if(item.bihin||item.itemMemo){
+        html+=`<div class="item-extras">`;
+        if(item.bihin){
+          if(selectedBihin.length){
+            html+=`<div class="selected-photo-tags">`;
+            selectedBihin.forEach(t=>{
+              const esc=t.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+              const fesc=fieldKey.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+              const bitem=getBihinData().find(b=>b.name===t);
+              const img=bitem&&bitem.img?bitem.img:'';
+              html+=`<div class="sel-photo-tag">
+                ${img?`<img src="${img}" onerror="this.style.display='none'">`:`<div class="ph">📦</div>`}
+                <span>${t}</span>
+                <button onclick="removeTag(${c.id},'${fesc}','${esc}')">×</button>
+              </div>`;
+            });
+            html+=`</div>`;
+          }
+          const catLabel=item.bihinCat||'';
+          const catDisp=catLabel==='衣装'?'👗 衣装':catLabel==='おもちゃ'?'🎾 おもちゃ':`📦 備品`;
+          const fesc=fieldKey.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          html+=`<button class="btn-open" onclick="openBihin(${c.id},'${fesc}','${catLabel}')">${catDisp}リストから選ぶ</button>`;
+        }
+        if(item.itemMemo){
+          html+=`<textarea class="memo-input" rows="1" placeholder="メモ" onchange="saveMemo(${c.id},'${sk}',this.value)">${memoVal}</textarea>`;
+        }
+        html+=`</div>`;
+      }
+      html+=`</div>`;
+    });
+    if(sec.sectionMemo){
+      const smk=safeKey(sec.key+'__section_memo');
+      const smv=(c.memos&&c.memos[smk])||'';
+      html+=`<div class="section-memo">
+        <div class="section-memo-label">📝 セクションメモ</div>
+        <textarea class="memo-input" rows="2" placeholder="${sec.key}に関するメモ・備考..." onchange="saveMemo(${c.id},'${smk}',this.value)">${smv}</textarea>
+      </div>`;
+    }
+    html+=`</div></div>`;
+  });
+
+  // その他備品
+  const bihinList=c.bihin||[];
+  html+=`<div class="section"><div class="section-head"><span>📦</span>その他備品（備品リストから選択）</div>`;
+  if(bihinList.length){
+    bihinList.forEach(item=>{
+      const sk=safeKey('bihin__'+item);
+      const isDone=!!c.checks[sk];
+      const bitem=getBihinData().find(b=>b.name===item);
+      const img=bitem&&bitem.img?bitem.img:'';
+      html+=`<div class="check-item${isDone?' done':''}" id="row_${c.id}_${sk}">
+        <div class="check-label-row" onclick="toggleCheck(${c.id},'${sk}')">
+          <div class="check-box"><div class="checkmark"></div></div>
+          ${img?`<img class="bihin-thumb" src="${img}" onerror="this.style.display='none'">`:`<div class="bihin-thumb-ph">📦</div>`}
+          <span class="item-text">${item}</span>
+          <div class="item-right">
+            ${(()=>{
+              const bsk=safeKey('bihin__'+item);
+              const effectiveOwner=(c.owners&&c.owners[bsk])||'PECO';
+              const o=OWNERS[effectiveOwner]||{bg:'#F1EFE8',color:'#444441'};
+              const opts=OWNER_KEYS.map(k=>`<option value="${k}"${k===effectiveOwner?' selected':''}>${k}</option>`).join('');
+              return `<select class="owner-select" id="owner_${c.id}_${bsk}" style="background:${o.bg};color:${o.color};" onclick="event.stopPropagation()" onchange="changeOwner(${c.id},'${bsk}',this.value)">${opts}</select>`;
+            })()}
+          </div>
+        </div>
+      </div>`;
+    });
+  } else {
+    html+=`<div style="padding:10px 1.25rem;font-size:13px;color:var(--text3);">備品リストから必要なものを選んで追加してください</div>`;
+  }
+  html+=`<div style="padding:8px 1.25rem;border-top:1px solid var(--border);">
+    <button class="btn-open" onclick="openBihin(${c.id},'bihin',null)">＋ 備品リストから追加・変更</button>
+  </div></div>`;
+
+  html+=`<div class="action-row">
+    <button class="btn accent" onclick="exportPPM(${c.id})">📊 PPMを出力（PPTX）</button>
+    <button class="btn" onclick="resetChecks()">↺ チェックをリセット</button>
+    <button class="btn danger" onclick="deleteCase(${c.id})">🗑 この案件を削除</button>
+  </div>`;
+  area.innerHTML=html;
+}
+
+// ローカルストレージ保存・読み込み
+function exportData(){
+  const blob=new Blob([JSON.stringify({cases,activeCaseId},null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='peco_checker_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+function importData(event){
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.cases){
+        if(!confirm('現在のデータを上書きしますか？')) return;
+        cases=data.cases;
+        activeCaseId=data.activeCaseId||( cases.length?cases[0].id:null);
+        saveToLocal(); renderAll();
+        alert('インポートが完了しました！');
+      }
+    }catch(err){ alert('ファイルの読み込みに失敗しました'); }
+  };
+  reader.readAsText(file);
+}
+function saveToLocal(){
+  // 自動保存なし（エクスポート/インポートで管理）
+}
+function loadFromLocal(){
+  // 自動読み込みなし
+}
+
+
+// ===== PPM出力 =====
+const VISUAL_SECS_SET = new Set(['犬の持ち物','猫の持ち物','モデル関連','飼い主関連','ペット用コントロールグッズ']);
+
+function exportPPM(caseId, orientation) {
+  if(!orientation) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `<div style="background:white;border-radius:10px;padding:1.5rem;width:320px;text-align:center;font-family:Noto Sans JP,sans-serif;">
+      <div style="font-size:16px;font-weight:700;margin-bottom:1rem;color:#1C1A17;">📊 PPMの向きを選択</div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-bottom:1rem;">
+        <button onclick="document.body.removeChild(this.closest('[style*=fixed]'));exportPPM(${caseId},'landscape')" style="flex:1;padding:14px 8px;border:2px solid #185FA5;border-radius:8px;cursor:pointer;background:#E6F1FB;color:#185FA5;font-weight:700;font-family:inherit;font-size:14px;">
+          🖥 横向き<br><span style="font-size:11px;font-weight:400;">16:9（スライド）</span>
+        </button>
+        <button onclick="document.body.removeChild(this.closest('[style*=fixed]'));exportPPM(${caseId},'portrait')" style="flex:1;padding:14px 8px;border:2px solid #185FA5;border-radius:8px;cursor:pointer;background:#E6F1FB;color:#185FA5;font-weight:700;font-family:inherit;font-size:14px;">
+          📄 縦向き<br><span style="font-size:11px;font-weight:400;">A4縦（印刷向き）</span>
+        </button>
+      </div>
+      <button onclick="document.body.removeChild(this.closest('[style*=fixed]'))" style="font-size:13px;color:#9A9490;background:none;border:none;cursor:pointer;">キャンセル</button>
+    </div>`;
+    document.body.appendChild(modal);
+    return;
+  }
+
+  const c = cases.find(c=>c.id===caseId); if(!c) return;
+
+  const OC = {'PECO':'3C3489','飼い主':'085041','クライアント':'633806','モデル':'712B13','カメラマン':'0C447C'};
+  const OB = {'PECO':'EEEDFE','飼い主':'D8EFE4','クライアント':'FAEEDA','モデル':'FAECE7','カメラマン':'E6F1FB'};
+  const CC = {header:'185FA5',light:'EBF3FB',lightMid:'B5D4F4',bg:'FFFFFF',row1:'F7FAFD',row2:'FFFFFF',border:'B5D4F4',text:'1C1A17',text2:'5A5552',text3:'9A9490',secbg:'EBF3FB',sectext:'0C447C',accent:'85B7EB'};
+  const DO = {'犬の持ち物':{'ワクチン接種証明書':'飼い主','狂犬病証明書':'飼い主','リード・ハーネス・首輪':'飼い主','犬用の水・給水器':'飼い主'},'猫の持ち物':{'ワクチン接種証明書':'飼い主','キャリーバッグ（慣れたもの）':'飼い主','猫用おやつ・フェリウェイ':'飼い主'},'モデル関連':{'衣装':'モデル','持ち物':'モデル','ペット同伴の場合の確認':'PECO'},'飼い主関連':{'衣装':'飼い主','飼い主の緊急連絡先を共有済みか':'PECO'},'ペット用コントロールグッズ':{'好きなおやつ（コントロール用）':'飼い主','おもちゃ（コントロール用）':'飼い主','おやつ予備':'PECO','おもちゃ予備':'PECO'}};
+  const SD = {'犬の持ち物':{icon:'🐶',items:['ワクチン接種証明書','狂犬病証明書','リード・ハーネス・首輪','犬用の水・給水器']},'猫の持ち物':{icon:'🐱',items:['ワクチン接種証明書','キャリーバッグ（慣れたもの）','猫用おやつ・フェリウェイ']},'モデル関連':{icon:'👤',items:['衣装','持ち物','ペット同伴の場合の確認']},'飼い主関連':{icon:'🏠',items:['衣装','飼い主の緊急連絡先を共有済みか']},'ペット用コントロールグッズ':{icon:'🎾',items:['好きなおやつ（コントロール用）','おもちゃ（コントロール用）','おやつ予備','おもちゃ予備']},'衛生用品（ペット用）':{icon:'🧹',items:['トイレシーツ','消臭スプレー（ペット用）','マナーバッグ・ビニール袋','タオル']},'衛生用品（人用）':{icon:'🧴',items:['ティッシュ','ウェットティッシュ','コロコロ','ゴミ袋（小）','ゴミ袋（中）','ゴミ袋（大）','ガムテープ','養生テープ','救急セット','カイロ']},'ケータリング':{icon:'☕',items:['水・お茶・飲み物','紙コップ','朝食','軽食（スナック、飴）','昼食（お弁当）']},'書類':{icon:'📋',items:['PPM','当日の香盤・スケジュール表']}};
+  const MS = {'犬単体':['犬の持ち物','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'猫単体':['猫の持ち物','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'犬＋モデル':['犬の持ち物','モデル関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'猫＋モデル':['猫の持ち物','モデル関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'犬＋飼い主':['犬の持ち物','飼い主関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'猫＋飼い主':['猫の持ち物','飼い主関連','ペット用コントロールグッズ','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類']};
+
+  function sk(s){return s.replace(/[^a-zA-Z0-9\u3000-\u9fff\u4e00-\u9fff]/g,'_');}
+  function getOwn(secKey,itemText){return(c.owners||{})[sk(secKey+'__'+itemText)]||(DO[secKey]||{})[itemText]||'PECO';}
+
+  const isL = orientation!=='portrait';
+  const W=isL?10:7.5, H=isL?5.625:10.5, MX=0.3, TW=W-MX*2;
+  const CARD_COLS=isL?5:4, HDR_H=isL?0.65:0.8, CONT_Y=HDR_H+0.15;
+  const CARD_W=(TW-(CARD_COLS-1)*0.12)/CARD_COLS, CARD_H=isL?1.5:1.6;
+  const SEC_LH=isL?0.28:0.25, IMG_H=CARD_H-0.38, GAP_X=0.12, GAP_Y=0.1;
+  const TBL_Y=HDR_H+0.25, ROW_HB=isL?0.55:0.25, ROW_HS=isL?0.14:0.12, SEC_HT=isL?0.32:0.22;
+  const TROWS_PER=isL?8:20;
+  const COL_W=isL?[0.4,TW-0.4-1.5-0.6-0.9,1.5,0.6,0.9]:[0.4,TW-0.4-1.2-0.6-0.8,1.2,0.6,0.8];
+
+  // ビジュアルグループ収集
+  const secKeys = MS[c.modelType]||MS['犬単体'];
+  const vGroups = [];
+  secKeys.filter(k=>VISUAL_SECS_SET.has(k)).forEach(secKey=>{
+    const sec=SD[secKey]; if(!sec) return;
+    const gitems=[];
+    sec.items.forEach(itemText=>{
+      const itemSk=sk(secKey+'__'+itemText);
+      if((c.notNeeded||{})[itemSk]||(c.qtys||{})[itemSk]==='0') return;
+      const bihin=((c.bihinFields||{})[secKey+'__'+itemText+'__bihin'])||[];
+      const owner=getOwn(secKey,itemText);
+      if(bihin.length){
+        bihin.forEach(bn=>{
+          const bi=getBihinData().find(b=>b.name===bn);
+          gitems.push({name:bn,img:(bi&&bi.img)||'',owner});
+        });
+      } else {
+        gitems.push({name:itemText,img:'',owner});
+      }
+    });
+    if(gitems.length) vGroups.push({label:secKey,icon:sec.icon,items:gitems});
+  });
+
+  // テーブル行収集
+  const tRows=[]; let no=1;
+  secKeys.filter(k=>!VISUAL_SECS_SET.has(k)).forEach(secKey=>{
+    const sec=SD[secKey]; if(!sec) return;
+    tRows.push({type:'section',label:`■${secKey}`});
+    sec.items.forEach(itemText=>{
+      const itemSk=sk(secKey+'__'+itemText);
+      if((c.notNeeded||{})[itemSk]||(c.qtys||{})[itemSk]==='0') return;
+      const qty=(c.qtys||{})[itemSk]||''; const memo=(c.memos||{})[itemSk]||'';
+      const bihin=((c.bihinFields||{})[secKey+'__'+itemText+'__bihin'])||[];
+      const owner=getOwn(secKey,itemText);
+      const bitem=bihin.length?getBihinData().find(b=>b.name===bihin[0]):null;
+      const img=bitem&&bitem.img?bitem.img:'';
+      let nl=[itemText]; if(bihin.length) bihin.forEach(b=>nl.push('  - '+b)); if(memo) nl.push('  📝'+memo);
+      tRows.push({type:'item',no:no++,nameLines:nl,qty:qty||'-',owner,img});
+    });
+  });
+  if((c.bihin||[]).length){
+    tRows.push({type:'section',label:'■その他備品'});
+    c.bihin.forEach(item=>{const bi=getBihinData().find(b=>b.name===item);tRows.push({type:'item',no:no++,nameLines:[item],qty:'-',owner:'PECO',img:(bi&&bi.img)||''});});
+  }
+
+  // ビジュアルスライド分割
+  let vSlides=[[]]; let cy=CONT_Y;
+  vGroups.forEach(g=>{
+    const rows=Math.ceil(g.items.length/CARD_COLS);
+    const gh=SEC_LH+rows*(CARD_H+GAP_Y);
+    if(cy+gh>H-0.1&&vSlides[vSlides.length-1].length>0){vSlides.push([]);cy=CONT_Y;}
+    vSlides[vSlides.length-1].push({...g,startY:cy});
+    cy+=gh+0.15;
+  });
+
+  // テーブルスライド分割
+  let tPages=[[]]; let tc=0; let ps=null;
+  tRows.forEach(r=>{
+    if(r.type==='section'){ps=r;}
+    else{
+      if(tc>=TROWS_PER){tPages.push([]);tc=0;ps=null;}
+      if(ps){if(tc>=TROWS_PER-1){tPages.push([]);tc=0;}tPages[tPages.length-1].push(ps);tc+=0.5;ps=null;}
+      tPages[tPages.length-1].push(r);tc++;
+    }
+  });
+
+  const TOTAL=1+vSlides.filter(s=>s.length>0).length+tPages.filter(s=>s.length>0).length;
+  let pno=1;
+
+  const pres=new PptxGenJS();
+  if(!isL){pres.defineLayout({name:'A4P',width:7.5,height:10.5});pres.layout='A4P';}
+  else pres.layout='LAYOUT_16x9';
+
+  function addHdr(slide,title,pn,tot){
+    slide.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:W,h:HDR_H-0.1,fill:{color:CC.header}});
+    slide.addText(title,{x:MX,y:0.08,w:W-MX-1.5,h:isL?0.35:0.42,fontSize:isL?14:12,bold:true,color:'FFFFFF',fontFace:'Meiryo',margin:0});
+    slide.addText(`${pn} / ${tot}`,{x:W-1.5,y:0.08,w:1.3,h:isL?0.35:0.42,fontSize:12,color:CC.lightMid,align:'right',margin:0,fontFace:'Meiryo'});
+    slide.addText(`${c.date?c.date+'　':''}${c.modelType}`,{x:MX,y:isL?0.44:0.5,w:W-MX,h:0.25,fontSize:10,color:CC.lightMid,margin:0,fontFace:'Meiryo'});
+  }
+
+  // タイトル
+  const ts=pres.addSlide(); ts.background={color:CC.header};
+  ts.addShape(pres.shapes.RECTANGLE,{x:0,y:H*0.55,w:0.2,h:H*0.38,fill:{color:CC.accent}});
+  ts.addText('撮影備品リスト',{x:0.5,y:H*0.28,w:W-1,h:H*0.2,fontSize:isL?38:32,bold:true,color:'FFFFFF',fontFace:'Meiryo',margin:0});
+  ts.addText([{text:c.name,options:{bold:true,breakLine:true}},{text:`モデルタイプ：${c.modelType}　${c.date?'撮影日：'+c.date:''}`,options:{bold:false}}],{x:0.5,y:H*0.52,w:W-1,h:H*0.22,fontSize:isL?15:13,color:CC.lightMid,fontFace:'Meiryo',margin:0});
+  ts.addText(`作成日：${new Date().toLocaleDateString('ja-JP')}`,{x:0,y:H-0.4,w:W,h:0.35,fontSize:10,color:CC.accent,align:'right',margin:0,fontFace:'Meiryo'});
+
+  // ビジュアルスライド
+  vSlides.forEach(groups=>{
+    if(!groups.length) return;
+    const slide=pres.addSlide(); slide.background={color:CC.bg};
+    addHdr(slide,`${c.name}　出演者・衣装 / ペット持ち物`,pno++,TOTAL-1);
+    groups.forEach(g=>{
+      slide.addShape(pres.shapes.RECTANGLE,{x:MX,y:g.startY,w:TW,h:SEC_LH-0.04,fill:{color:CC.secbg}});
+      slide.addShape(pres.shapes.RECTANGLE,{x:MX,y:g.startY,w:0.05,h:SEC_LH-0.04,fill:{color:CC.header}});
+      slide.addText(`${g.icon} ${g.label}`,{x:MX+0.1,y:g.startY,w:TW-0.1,h:SEC_LH-0.04,fontSize:11,bold:true,color:CC.sectext,fontFace:'Meiryo',valign:'middle',margin:0});
+      g.items.forEach((item,idx)=>{
+        const col=idx%CARD_COLS, row=Math.floor(idx/CARD_COLS);
+        const cx=MX+col*(CARD_W+GAP_X), cy2=g.startY+SEC_LH+row*(CARD_H+GAP_Y);
+        slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cx,y:cy2,w:CARD_W,h:CARD_H,fill:{color:'F7FAFD'},rectRadius:0.08,line:{color:CC.border,width:0.75}});
+        if(item.img){
+          const is=Math.min(CARD_W-0.1,IMG_H-0.05);
+          slide.addImage({path:item.img,x:cx+(CARD_W-is)/2,y:cy2+0.04,w:is,h:is});
+        } else {
+          slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cx+0.06,y:cy2+0.04,w:CARD_W-0.12,h:IMG_H-0.05,fill:{color:CC.light},rectRadius:0.05,line:{color:CC.border}});
+          slide.addText('No Image',{x:cx+0.06,y:cy2+0.04,w:CARD_W-0.12,h:IMG_H-0.05,fontSize:9,color:CC.text3,align:'center',valign:'middle',fontFace:'Meiryo',margin:0});
+        }
+        slide.addText(item.name,{x:cx+0.04,y:cy2+IMG_H+0.02,w:CARD_W-0.08,h:0.22,fontSize:9,color:CC.text,fontFace:'Meiryo',align:'center',valign:'middle',margin:0});
+        const oc=OC[item.owner]||'444441',ob=OB[item.owner]||'F1EFE8';
+        const tw2=Math.min(CARD_W-0.12,0.7),tx=cx+(CARD_W-tw2)/2;
+        slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:tx,y:cy2+CARD_H-0.22,w:tw2,h:0.18,fill:{color:ob},rectRadius:0.04,line:{color:ob}});
+        slide.addText(item.owner,{x:tx,y:cy2+CARD_H-0.22,w:tw2,h:0.18,fontSize:8,color:oc,align:'center',valign:'middle',fontFace:'Meiryo',bold:true,margin:0});
+      });
+    });
+  });
+
+  // テーブルスライド
+  tPages.forEach(pageRows=>{
+    if(!pageRows.length) return;
+    const slide=pres.addSlide(); slide.background={color:CC.bg};
+    addHdr(slide,`${c.name}　備品リスト`,pno++,TOTAL-1);
+    let tcy=TBL_Y; const TH=0.3;
+    slide.addShape(pres.shapes.RECTANGLE,{x:MX,y:tcy,w:TW,h:TH,fill:{color:CC.header}});
+    let tcx=MX;
+    ['No','名称','実物画像','個数','担当'].forEach((h,i)=>{
+      slide.addText(h,{x:tcx,y:tcy,w:COL_W[i],h:TH,fontSize:11,bold:true,color:'FFFFFF',fontFace:'Meiryo',align:'center',valign:'middle',margin:0});
+      tcx+=COL_W[i];
+    });
+    tcy+=TH;
+    pageRows.forEach((row,ri)=>{
+      if(row.type==='section'){
+        slide.addShape(pres.shapes.RECTANGLE,{x:MX,y:tcy,w:TW,h:SEC_HT,fill:{color:CC.secbg}});
+        slide.addShape(pres.shapes.RECTANGLE,{x:MX,y:tcy,w:0.05,h:SEC_HT,fill:{color:CC.header}});
+        slide.addText(row.label,{x:MX+0.1,y:tcy,w:TW-0.1,h:SEC_HT,fontSize:10,bold:true,color:CC.sectext,fontFace:'Meiryo',valign:'middle',margin:0});
+        tcy+=SEC_HT;
+      } else {
+        const sc=row.nameLines?row.nameLines.length-1:0;
+        const rh=ROW_HB+sc*ROW_HS;
+        const bgc=ri%2===0?CC.row1:CC.row2;
+        slide.addShape(pres.shapes.RECTANGLE,{x:MX,y:tcy,w:TW,h:rh,fill:{color:bgc},line:{color:CC.border,width:0.5}});
+        tcx=MX;
+        slide.addText(String(row.no),{x:tcx,y:tcy,w:COL_W[0],h:rh,fontSize:10,color:CC.text2,align:'center',valign:'middle',fontFace:'Meiryo',margin:0}); tcx+=COL_W[0];
+        const ni=row.nameLines.map((l,i)=>({text:l,options:{breakLine:i<row.nameLines.length-1,fontSize:l.startsWith('  ')?9:11,color:l.startsWith('  📝')?'888884':CC.text,bold:i===0}}));
+        slide.addText(ni,{x:tcx+0.04,y:tcy+0.02,w:COL_W[1]-0.08,h:rh-0.04,fontFace:'Meiryo',valign:'top',margin:0}); tcx+=COL_W[1];
+        if(row.img) slide.addImage({path:row.img,x:tcx+(COL_W[2]-rh*0.82)/2,y:tcy+(rh-rh*0.82)/2,w:rh*0.82,h:rh*0.82});
+        else slide.addText('−',{x:tcx,y:tcy,w:COL_W[2],h:rh,fontSize:10,color:'CCCCCC',align:'center',valign:'middle',fontFace:'Meiryo',margin:0}); tcx+=COL_W[2];
+        slide.addText(row.qty||'-',{x:tcx,y:tcy,w:COL_W[3],h:rh,fontSize:11,color:CC.text,align:'center',valign:'middle',fontFace:'Meiryo',margin:0}); tcx+=COL_W[3];
+        const oc=OC[row.owner]||'444441',ob=OB[row.owner]||'F1EFE8';
+        const pw=Math.min(COL_W[4]-0.1,0.75),px=tcx+(COL_W[4]-pw)/2,py=tcy+(rh-0.22)/2;
+        slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:px,y:py,w:pw,h:0.22,fill:{color:ob},rectRadius:0.05,line:{color:ob}});
+        slide.addText(row.owner,{x:px,y:py,w:pw,h:0.22,fontSize:9,color:oc,align:'center',valign:'middle',fontFace:'Meiryo',bold:true,margin:0});
+        tcy+=rh;
+      }
+    });
+  });
+
+  const fileName=`PPM_${c.name}_${c.date||'日付未定'}_${isL?'横':'縦'}.pptx`;
+  pres.writeFile({fileName});
+}
+
+function renderAll(){ renderCasesBar(); renderMain(); saveToLocal(); }
+loadFromLocal();
+renderAll = function(){ renderCasesBar(); renderMain(); saveToLocal(); };
+loadFromLocal();
+renderAll();
+</script>
+</body>
+</html>
