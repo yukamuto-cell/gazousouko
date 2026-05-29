@@ -804,8 +804,8 @@ async function exportPPM(caseId, orientation) {
           const localImg = (c.localImages||{})[bn] ? 'local:'+bn : '';
           gitems.push({name:bn,img:localImg||(bi&&bi.img)||'',owner});
         });
-      } else if(item.bihinCat==='upload_only') {
-        // upload_onlyはbihinが空でも表示しない（画像アップ待ち）
+      } else if(itemText.endsWith('_飼い主')) {
+        // 飼い主持参アイテムはbihinが空なら表示しない（画像アップ待ち）
       } else {
         gitems.push({name:itemText,img:'',owner});
       }
