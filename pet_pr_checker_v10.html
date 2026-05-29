@@ -256,15 +256,22 @@ const SECTIONS = {
   '犬の持ち物': { icon:'🐶', items:[
     {text:'ワクチン接種証明書', owner:'飼い主'},
     {text:'狂犬病証明書', owner:'飼い主'},
-    {text:'リード・ハーネス・首輪', owner:'飼い主', bihin:true, bihinCat:'犬持ち物'},
     {text:'犬用の水・給水器', owner:'飼い主'},
-    {text:'好きなおやつ（コントロール用）', owner:'飼い主'},
-    {text:'おもちゃ（コントロール用）', owner:'飼い主', bihin:true, bihinCat:'おもちゃ'},
+    {text:'好きなおやつ', owner:'飼い主'},
+    {text:'おやつ予備', owner:'PECO'},
+    {text:'リード・ハーネス・首輪・その他_飼い主', owner:'飼い主', bihin:true, bihinCat:'upload_only'},
+    {text:'リード・ハーネス・首輪・その他_PECO', owner:'PECO', bihin:true, bihinCat:'備品', uploadDisabled:true},
+    {text:'おもちゃ_飼い主', owner:'飼い主', bihin:true, bihinCat:'upload_only'},
+    {text:'おもちゃ予備_PECO', owner:'PECO', bihin:true, bihinCat:'おもちゃ', uploadDisabled:true},
   ], sectionMemo:true },
   '猫の持ち物': { icon:'🐱', items:[
     {text:'ワクチン接種証明書', owner:'飼い主'},
-    {text:'キャリーバッグ（慣れたもの）', owner:'飼い主', bihin:true, bihinCat:'猫持ち物'},
-    {text:'猫用おやつ・フェリウェイ', owner:'飼い主'},
+    {text:'好きなおやつ', owner:'飼い主'},
+    {text:'おやつ予備', owner:'PECO'},
+    {text:'リード・ハーネス・首輪・その他_飼い主', owner:'飼い主', bihin:true, bihinCat:'upload_only'},
+    {text:'リード・ハーネス・首輪・その他_PECO', owner:'PECO', bihin:true, bihinCat:'備品', uploadDisabled:true},
+    {text:'おもちゃ_飼い主', owner:'飼い主', bihin:true, bihinCat:'upload_only'},
+    {text:'おもちゃ予備_PECO', owner:'PECO', bihin:true, bihinCat:'おもちゃ（猫）', uploadDisabled:true},
   ], sectionMemo:true },
   'モデル関連': { icon:'👤', items:[
     {text:'衣装', owner:'モデル', bihin:true, bihinCat:'衣装'},
@@ -292,7 +299,6 @@ const SECTIONS = {
     {text:'ガムテープ', owner:'PECO', qty:true},
     {text:'養生テープ', owner:'PECO', qty:true},
     {text:'救急セット', owner:'PECO', qty:true},
-    {text:'カイロ', owner:'PECO', qty:true},
   ], sectionMemo:true },
   'ケータリング': { icon:'☕', items:[
     {text:'水・お茶・飲み物', owner:'PECO', qty:true, itemMemo:true},
@@ -603,7 +609,7 @@ function renderMain(){
       html+=`<div class="check-item${isDone?' done':''}${isNotNeeded?' not-needed':''}" id="row_${c.id}_${sk}">
         <div class="check-label-row" onclick="toggleCheck(${c.id},'${sk}')">
           <div class="check-box"><div class="checkmark"></div></div>
-          <span class="item-text">${item.text}</span>
+          <span class="item-text">${item.text.replace(/_飼い主$|_PECO$/,'')}</span>
           <div class="item-right">
             ${item.qty
               ?`<div class="qty-wrap"><span>必要数:</span><input type="number" min="0" value="${qtyVal}" placeholder="-" title="0で不要扱い" onclick="event.stopPropagation()" onchange="saveQty(${c.id},'${sk}',this.value)"></div>`
@@ -639,7 +645,9 @@ function renderMain(){
           const catDisp=catLabel==='衣装'?'👗 衣装':catLabel==='おもちゃ'?'🎾 おもちゃ':`📦 備品`;
           const fesc=fieldKey.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
           html+=`<div style="display:flex;gap:6px;flex-wrap:wrap;">`;
-          html+=`<button class="btn-open" onclick="openBihin(${c.id},'${fesc}','${catLabel}')">${catDisp}リストから選ぶ</button>`;
+          if(catLabel!=='upload_only'){
+            html+=`<button class="btn-open" onclick="openBihin(${c.id},'${fesc}','${catLabel}')">${catDisp}リストから選ぶ</button>`;
+          }
           html+=`<label class="btn-open" style="cursor:pointer;">📎 画像をアップ<input type="file" accept="image/*" multiple style="display:none;" onchange="uploadLocalImage(${c.id},'${fesc}',this)"></label>`;
           html+=`</div>`;
         }
@@ -763,8 +771,8 @@ async function exportPPM(caseId, orientation) {
   const OC = {'PECO':'3C3489','飼い主':'085041','クライアント':'633806','モデル':'712B13','カメラマン':'0C447C'};
   const OB = {'PECO':'EEEDFE','飼い主':'D8EFE4','クライアント':'FAEEDA','モデル':'FAECE7','カメラマン':'E6F1FB'};
   const CC = {header:'185FA5',light:'EBF3FB',lightMid:'B5D4F4',bg:'FFFFFF',row1:'F7FAFD',row2:'FFFFFF',border:'B5D4F4',text:'1C1A17',text2:'5A5552',text3:'9A9490',secbg:'EBF3FB',sectext:'0C447C',accent:'85B7EB'};
-  const DO = {'犬の持ち物':{'ワクチン接種証明書':'飼い主','狂犬病証明書':'飼い主','リード・ハーネス・首輪':'飼い主','犬用の水・給水器':'飼い主','好きなおやつ（コントロール用）':'飼い主','おもちゃ（コントロール用）':'飼い主'},'猫の持ち物':{'ワクチン接種証明書':'飼い主','キャリーバッグ（慣れたもの）':'飼い主','猫用おやつ・フェリウェイ':'飼い主','好きなおやつ（コントロール用）':'飼い主','おもちゃ（コントロール用）':'飼い主'},'モデル関連':{'衣装':'モデル','持ち物':'モデル','ペット同伴の場合の確認':'PECO'},'飼い主関連':{'衣装':'飼い主','飼い主の緊急連絡先を共有済みか':'PECO'}};
-  const SD = {'犬の持ち物':{icon:'🐶',items:['ワクチン接種証明書','狂犬病証明書','リード・ハーネス・首輪','犬用の水・給水器','好きなおやつ（コントロール用）','おもちゃ（コントロール用）']},'猫の持ち物':{icon:'🐱',items:['ワクチン接種証明書','キャリーバッグ（慣れたもの）','猫用おやつ・フェリウェイ','好きなおやつ（コントロール用）','おもちゃ（コントロール用）']},'モデル関連':{icon:'👤',items:['衣装','持ち物','ペット同伴の場合の確認']},'飼い主関連':{icon:'🏠',items:['衣装','飼い主の緊急連絡先を共有済みか']},'衛生用品（ペット用）':{icon:'🧹',items:['トイレシーツ','消臭スプレー（ペット用）','マナーバッグ・ビニール袋','タオル']},'衛生用品（人用）':{icon:'🧴',items:['ティッシュ','ウェットティッシュ','コロコロ','ゴミ袋（小）','ゴミ袋（中）','ゴミ袋（大）','ガムテープ','養生テープ','救急セット','カイロ']},'ケータリング':{icon:'☕',items:['水・お茶・飲み物','紙コップ','朝食','軽食（スナック、飴）','昼食（お弁当）']},'書類':{icon:'📋',items:['PPM','当日の香盤・スケジュール表']}};
+  const DO = {'犬の持ち物':{'ワクチン接種証明書':'飼い主','狂犬病証明書':'飼い主','犬用の水・給水器':'飼い主','好きなおやつ':'飼い主','おやつ予備':'PECO','リード・ハーネス・首輪・その他_飼い主':'飼い主','リード・ハーネス・首輪・その他_PECO':'PECO','おもちゃ_飼い主':'飼い主','おもちゃ予備_PECO':'PECO'},'猫の持ち物':{'ワクチン接種証明書':'飼い主','好きなおやつ':'飼い主','おやつ予備':'PECO','リード・ハーネス・首輪・その他_飼い主':'飼い主','リード・ハーネス・首輪・その他_PECO':'PECO','おもちゃ_飼い主':'飼い主','おもちゃ予備_PECO':'PECO'},'モデル関連':{'衣装':'モデル','持ち物':'モデル','ペット同伴の場合の確認':'PECO'},'飼い主関連':{'衣装':'飼い主','飼い主の緊急連絡先を共有済みか':'PECO'}};
+  const SD = {'犬の持ち物':{icon:'🐶',items:['ワクチン接種証明書','狂犬病証明書','犬用の水・給水器','好きなおやつ','おやつ予備','リード・ハーネス・首輪・その他_飼い主','リード・ハーネス・首輪・その他_PECO','おもちゃ_飼い主','おもちゃ予備_PECO']},'猫の持ち物':{icon:'🐱',items:['ワクチン接種証明書','好きなおやつ','おやつ予備','リード・ハーネス・首輪・その他_飼い主','リード・ハーネス・首輪・その他_PECO','おもちゃ_飼い主','おもちゃ予備_PECO']},'モデル関連':{icon:'👤',items:['衣装','持ち物','ペット同伴の場合の確認']},'飼い主関連':{icon:'🏠',items:['衣装','飼い主の緊急連絡先を共有済みか']},'衛生用品（ペット用）':{icon:'🧹',items:['トイレシーツ','消臭スプレー（ペット用）','マナーバッグ・ビニール袋','タオル']},'衛生用品（人用）':{icon:'🧴',items:['ティッシュ','ウェットティッシュ','コロコロ','ゴミ袋（小）','ゴミ袋（中）','ゴミ袋（大）','ガムテープ','養生テープ','救急セット']},'ケータリング':{icon:'☕',items:['水・お茶・飲み物','紙コップ','朝食','軽食（スナック、飴）','昼食（お弁当）']},'書類':{icon:'📋',items:['PPM','当日の香盤・スケジュール表']}};
   const MS = {'犬単体':['犬の持ち物','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'猫単体':['猫の持ち物','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'犬＋モデル':['犬の持ち物','モデル関連','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'猫＋モデル':['猫の持ち物','モデル関連','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'犬＋飼い主':['犬の持ち物','飼い主関連','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類'],'猫＋飼い主':['猫の持ち物','飼い主関連','衛生用品（ペット用）','衛生用品（人用）','ケータリング','書類']};
 
   function sk(s){return s.replace(/[^a-zA-Z0-9\u3000-\u9fff\u4e00-\u9fff]/g,'_');}
@@ -793,10 +801,11 @@ async function exportPPM(caseId, orientation) {
       if(bihin.length){
         bihin.forEach(bn=>{
           const bi=getBihinData().find(b=>b.name===bn);
-          // ローカルアップロード画像を確認
           const localImg = (c.localImages||{})[bn] ? 'local:'+bn : '';
           gitems.push({name:bn,img:localImg||(bi&&bi.img)||'',owner});
         });
+      } else if(item.bihinCat==='upload_only') {
+        // upload_onlyはbihinが空でも表示しない（画像アップ待ち）
       } else {
         gitems.push({name:itemText,img:'',owner});
       }
@@ -901,7 +910,7 @@ async function exportPPM(caseId, orientation) {
         } else {
           slide.addText('No Image',{x:cx+0.06,y:cy2+0.04,w:CARD_W-0.12,h:IMG_H-0.05,fontSize:9,color:CC.text3,align:'center',valign:'middle',fontFace:'Meiryo',margin:0});
         }
-        slide.addText(item.name,{x:cx+0.04,y:cy2+IMG_H+0.02,w:CARD_W-0.08,h:0.22,fontSize:9,color:CC.text,fontFace:'Meiryo',align:'center',valign:'middle',margin:0});
+        slide.addText(item.name.replace(/_飼い主$|_PECO$/,''),{x:cx+0.04,y:cy2+IMG_H+0.02,w:CARD_W-0.08,h:0.22,fontSize:9,color:CC.text,fontFace:'Meiryo',align:'center',valign:'middle',margin:0});
         const oc=OC[item.owner]||'444441',ob=OB[item.owner]||'F1EFE8';
         const tw2=Math.min(CARD_W-0.12,0.7),tx=cx+(CARD_W-tw2)/2;
         slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:tx,y:cy2+CARD_H-0.22,w:tw2,h:0.18,fill:{color:ob},rectRadius:0.04,line:{color:ob}});
