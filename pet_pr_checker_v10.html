@@ -185,6 +185,8 @@ const imgBase64Cache = {};
 function fetchImgViaGAS(url) {
   return new Promise((resolve) => {
     if(!url) return resolve(null);
+    // ローカル画像はキャッシュからそのまま返す
+    if(url.startsWith('local:')) return resolve(imgBase64Cache[url] || null);
     if(imgBase64Cache[url]) return resolve(imgBase64Cache[url]);
     const cbName = 'imgCallback_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     const scriptEl = document.createElement('script');
@@ -327,15 +329,40 @@ function changeOwner(caseId, sk, val){
   const c=cases.find(c=>c.id===caseId); if(!c) return;
   if(!c.owners) c.owners={};
   c.owners[sk]=val;
-  // ピルの表示を更新
-  const pill=document.getElementById('owner_'+caseId+'_'+sk);
-  if(pill){
+  // selectの色だけ更新（valueはonchangeで既に変わっている）
+  const sel=document.getElementById('owner_'+caseId+'_'+sk);
+  if(sel){
     const o=OWNERS[val]||{bg:'#F1EFE8',color:'#444441'};
-    pill.textContent=val;
-    pill.style.background=o.bg;
-    pill.style.color=o.color;
+    sel.style.background=o.bg;
+    sel.style.color=o.color;
   }
   saveToLocal();
+}
+function uploadLocalImage(caseId, field, input) {
+  const files = input.files;
+  if(!files || !files.length) return;
+  const c = cases.find(c=>c.id===caseId); if(!c) return;
+  if(!c.localImages) c.localImages = {};
+  if(!c.bihinFields) c.bihinFields = {};
+
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const dataUrl = e.target.result;
+      const name = file.name.replace(/\.[^.]+$/, ''); // 拡張子除去
+      // localImagesに保存
+      c.localImages[name] = dataUrl;
+      // bihinFieldsにも追加
+      if(!c.bihinFields[field]) c.bihinFields[field] = [];
+      if(!c.bihinFields[field].includes(name)) c.bihinFields[field].push(name);
+      // imgBase64Cacheにも登録（PPTXで使う）
+      imgBase64Cache['local:'+name] = dataUrl;
+      saveToLocal();
+      renderMain();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = ''; // リセット
 }
 function toggleNotNeeded(caseId, sk){
   const c=cases.find(c=>c.id===caseId); if(!c) return;
@@ -513,6 +540,13 @@ function renderCasesBar(){
 }
 
 function renderMain(){
+  // localImagesをimgBase64Cacheに登録
+  const c2 = getActive();
+  if(c2 && c2.localImages) {
+    Object.entries(c2.localImages).forEach(([name, dataUrl]) => {
+      imgBase64Cache['local:'+name] = dataUrl;
+    });
+  }
   const area=document.getElementById('main-area');
   const c=getActive();
   if(!c){ area.innerHTML=`<div class="no-case" style="padding:3rem;text-align:center;"><div style="font-size:36px;margin-bottom:1rem;">🐾</div><p>「＋ 案件を追加」から始めてください。</p></div>`; return; }
@@ -591,7 +625,8 @@ function renderMain(){
               const esc=t.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
               const fesc=fieldKey.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
               const bitem=getBihinData().find(b=>b.name===t);
-              const img=bitem&&bitem.img?bitem.img:'';
+              const localImg=(c.localImages||{})[t]||'';
+              const img=localImg||(bitem&&bitem.img?bitem.img:'');
               html+=`<div class="sel-photo-tag">
                 ${img?`<img src="${img}" onerror="this.style.display='none'">`:`<div class="ph">📦</div>`}
                 <span>${t}</span>
@@ -603,7 +638,10 @@ function renderMain(){
           const catLabel=item.bihinCat||'';
           const catDisp=catLabel==='衣装'?'👗 衣装':catLabel==='おもちゃ'?'🎾 おもちゃ':`📦 備品`;
           const fesc=fieldKey.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          html+=`<div style="display:flex;gap:6px;flex-wrap:wrap;">`;
           html+=`<button class="btn-open" onclick="openBihin(${c.id},'${fesc}','${catLabel}')">${catDisp}リストから選ぶ</button>`;
+          html+=`<label class="btn-open" style="cursor:pointer;">📎 画像をアップ<input type="file" accept="image/*" multiple style="display:none;" onchange="uploadLocalImage(${c.id},'${fesc}',this)"></label>`;
+          html+=`</div>`;
         }
         if(item.itemMemo){
           html+=`<textarea class="memo-input" rows="1" placeholder="メモ" onchange="saveMemo(${c.id},'${sk}',this.value)">${memoVal}</textarea>`;
@@ -755,7 +793,9 @@ async function exportPPM(caseId, orientation) {
       if(bihin.length){
         bihin.forEach(bn=>{
           const bi=getBihinData().find(b=>b.name===bn);
-          gitems.push({name:bn,img:(bi&&bi.img)||'',owner});
+          // ローカルアップロード画像を確認
+          const localImg = (c.localImages||{})[bn] ? 'local:'+bn : '';
+          gitems.push({name:bn,img:localImg||(bi&&bi.img)||'',owner});
         });
       } else {
         gitems.push({name:itemText,img:'',owner});
