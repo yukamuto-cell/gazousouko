@@ -790,7 +790,7 @@ async function exportPPM(caseId, orientation) {
   const isL = orientation!=='portrait';
   const W=isL?10:7.5, H=isL?5.625:10.5, MX=0.3, TW=W-MX*2;
   const CARD_COLS=isL?5:4, HDR_H=isL?0.65:0.8, CONT_Y=HDR_H+0.15;
-  const CARD_W=(TW-(CARD_COLS-1)*0.12)/CARD_COLS, CARD_H=isL?1.5:1.6;
+  const CARD_W=(TW-(CARD_COLS-1)*0.12)/CARD_COLS, CARD_H=isL?1.9:2.0;
   const SEC_LH=isL?0.28:0.25, IMG_H=CARD_H-0.38, GAP_X=0.12, GAP_Y=0.1;
   const TBL_Y=HDR_H+0.25, ROW_HB=isL?0.55:0.25, ROW_HS=isL?0.14:0.12, SEC_HT=isL?0.32:0.22;
   const TROWS_PER=isL?8:20;
@@ -911,19 +911,22 @@ async function exportPPM(caseId, orientation) {
         const col=idx%CARD_COLS, row=Math.floor(idx/CARD_COLS);
         const cx=MX+col*(CARD_W+GAP_X), cy2=g.startY+SEC_LH+row*(CARD_H+GAP_Y);
         slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cx,y:cy2,w:CARD_W,h:CARD_H,fill:{color:'F7FAFD'},rectRadius:0.08,line:{color:CC.border,width:0.75}});
-        slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cx+0.06,y:cy2+0.04,w:CARD_W-0.12,h:IMG_H-0.05,fill:{color:CC.light},rectRadius:0.05,line:{color:CC.border}});
+        const imgAreaH = CARD_H - 0.55;
         const imgData = imgBase64Cache[item.img];
         if(imgData){
-          const is=Math.min(CARD_W-0.1,IMG_H-0.05);
+          const is=Math.min(CARD_W-0.12,imgAreaH-0.06);
           slide.addImage({data:imgData,x:cx+(CARD_W-is)/2,y:cy2+0.04,w:is,h:is});
         } else {
-          slide.addText('No Image',{x:cx+0.06,y:cy2+0.04,w:CARD_W-0.12,h:IMG_H-0.05,fontSize:9,color:CC.text3,align:'center',valign:'middle',fontFace:'Meiryo',margin:0});
+          slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cx+0.06,y:cy2+0.03,w:CARD_W-0.12,h:imgAreaH-0.04,fill:{color:CC.light},rectRadius:0.05,line:{color:CC.border}});
+          slide.addText('No Image',{x:cx+0.06,y:cy2+0.03,w:CARD_W-0.12,h:imgAreaH-0.04,fontSize:8,color:CC.text3,align:'center',valign:'middle',fontFace:'Meiryo',margin:0});
         }
-        slide.addText(item.name.replace(/_飼い主$|_PECO$/,''),{x:cx+0.04,y:cy2+IMG_H+0.02,w:CARD_W-0.08,h:0.22,fontSize:9,color:CC.text,fontFace:'Meiryo',align:'center',valign:'middle',margin:0});
+        slide.addShape(pres.shapes.RECTANGLE,{x:cx,y:cy2+imgAreaH,w:CARD_W,h:0.01,fill:{color:CC.border}});
+        slide.addText(item.name.replace(/_飼い主$|_PECO$|_モデル$/,''),{x:cx+0.03,y:cy2+imgAreaH+0.01,w:CARD_W-0.06,h:0.28,fontSize:8,color:CC.text,fontFace:'Meiryo',align:'center',valign:'middle',margin:0,wrap:true});
+        slide.addShape(pres.shapes.RECTANGLE,{x:cx,y:cy2+imgAreaH+0.29,w:CARD_W,h:0.01,fill:{color:CC.border}});
         const oc=OC[item.owner]||'444441',ob=OB[item.owner]||'F1EFE8';
-        const tw2=Math.min(CARD_W-0.12,0.7),tx=cx+(CARD_W-tw2)/2;
-        slide.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:tx,y:cy2+CARD_H-0.24,w:tw2,h:0.19,fill:{color:ob},rectRadius:0.04,line:{color:ob}});
-        slide.addText(item.owner,{x:tx,y:cy2+CARD_H-0.24,w:tw2,h:0.19,fontSize:8,color:oc,align:'center',valign:'middle',fontFace:'Meiryo',bold:true,margin:0});
+        slide.addShape(pres.shapes.RECTANGLE,{x:cx,y:cy2+imgAreaH+0.3,w:CARD_W,h:0.25,fill:{color:ob}});
+        slide.addText(item.owner,{x:cx,y:cy2+imgAreaH+0.3,w:CARD_W,h:0.25,fontSize:9,color:oc,align:'center',valign:'middle',fontFace:'Meiryo',bold:true,margin:0});
+
       });
     });
   });
